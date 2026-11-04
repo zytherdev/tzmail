@@ -19,6 +19,18 @@ function safeHref(value, allowMailto = false) {
         throw new Error('Unsafe URL scheme in template');
     return escapeHtml(value);
 }
+function accessibleTextColor(background) {
+    const hex = background.replace(/^#/, '');
+    const normalized = hex.length === 3 ? hex.split('').map((channel) => channel + channel).join('') : hex;
+    if (!/^[\da-f]{6}$/i.test(normalized))
+        return '#ffffff';
+    const channels = [0, 2, 4].map((offset) => parseInt(normalized.slice(offset, offset + 2), 16) / 255);
+    const luminance = channels.map((channel) => channel <= 0.04045 ? channel / 12.92 : ((channel + 0.055) / 1.055) ** 2.4)
+        .reduce((sum, channel, index) => sum + channel * [0.2126, 0.7152, 0.0722][index], 0);
+    const whiteContrast = 1.05 / (luminance + 0.05);
+    const blackContrast = (luminance + 0.05) / 0.05;
+    return whiteContrast >= blackContrast ? '#ffffff' : '#000000';
+}
 class TemplateBuilder {
     template = '';
     theme;
@@ -234,7 +246,7 @@ class TemplateBuilder {
             processedContent = this.highlightCode(content);
         }
         this.template += `
-    <table width="100%" cellpadding="0" cellspacing="0" role="presentation" style="background-color: #ffffff; padding: 10px;">
+    <table width="100%" cellpadding="0" cellspacing="0" role="presentation" style="background-color: ${colors.background}; padding: 10px;">
       <tr>
         <td style="${bodyStyles}">
           ${processedContent}
@@ -331,11 +343,12 @@ class TemplateBuilder {
             throw new Error('Invalid CTA variant');
         const safeUrl = safeHref(url, true);
         const buttonColor = variant === 'primary' ? colors.primary : variant === 'secondary' ? colors.secondary : variant === 'success' ? '#16a34a' : '#dc2626';
+        const buttonTextColor = accessibleTextColor(buttonColor);
         let buttonStyles = `
       display: inline-block;
       padding: 12px 24px!important;
       background-color: ${buttonColor};
-      color: white;
+      color: ${buttonTextColor};
       text-decoration: none;
       font-weight: ${this.theme.typography.fontWeights.medium};
       margin: ${this.theme.spacing.md} 0;
@@ -399,7 +412,7 @@ class TemplateBuilder {
         <tr>
           <td align="center">
             
-            <table cellpadding="0" cellspacing="0" role="presentation">
+            <table class="button" cellpadding="0" cellspacing="0" role="presentation">
               <tr>
                 <td style="${buttonStyles}">
                   <a href="${safeUrl}" style="
@@ -560,10 +573,10 @@ class TemplateBuilder {
         <tr>
           <td style="padding-bottom: ${this.theme.spacing.lg};" align="center">
             
-            <table cellpadding="0" cellspacing="0" role="presentation">
+            <table class="footer-links" cellpadding="0" cellspacing="0" role="presentation">
               <tr>
                 ${this.config.footer.links.map(link => `
-                  <td style="padding: 0 8px;">
+                  <td class="footer-link-cell" style="padding: 0 8px;">
                     <a href="${safeHref(link.url, true)}" style="${linkStyles}">
                       ${escapeHtml(link.text)}
                     </a>
@@ -635,7 +648,7 @@ class TemplateBuilder {
         const isCorporate = this.theme.id === 'corporate';
         const isMinimal = this.theme.id === 'minimal';
         const wrapperStyles = 'margin: 0; padding: 0;';
-        let containerStyles = `max-width: ${isMinimal ? '640px' : '600px'}; margin: 0 auto;`;
+        let containerStyles = `width: 100%; max-width: ${isMinimal ? '640px' : '600px'}; margin: 0 auto; box-sizing: border-box;`;
         if (isModern) {
             containerStyles += `
         border-radius: ${this.theme.borderStyle.radius.large};
@@ -670,12 +683,27 @@ class TemplateBuilder {
           <meta name="viewport" content="width=device-width, initial-scale=1.0">
           <title>Email Template</title>
           <style>
+            .container { width: 100%; box-sizing: border-box; }
+            .button { max-width: 100%; }
             @media only screen and (max-width: 600px) {
               .container {
                 width: 100% !important;
+                max-width: 100% !important;
               }
-              .button {
+              table.button {
                 display: block !important;
+                width: 100% !important;
+              }
+              .button a {
+                box-sizing: border-box !important;
+                display: block !important;
+                text-align: center !important;
+                width: 100% !important;
+              }
+              .footer-link-cell {
+                box-sizing: border-box !important;
+                display: block !important;
+                padding: 4px 0 !important;
                 width: 100% !important;
               }
             }

@@ -165,10 +165,7 @@ class TemplateService {
     }
     listThemes() { return template_factory_1.TemplateFactory.listThemes(); }
     getTemplateStats() {
-        const templatesByTheme = {
-            [theme_enum_1.ThemeType.SYSTEM]: 0, [theme_enum_1.ThemeType.MONOKAI]: 0, [theme_enum_1.ThemeType.MODERN]: 0,
-            [theme_enum_1.ThemeType.CORPORATE]: 0, [theme_enum_1.ThemeType.MINIMAL]: 0
-        };
+        const templatesByTheme = Object.fromEntries(Object.values(theme_enum_1.ThemeType).map((theme) => [theme, 0]));
         for (const cache of this.templateCache.values()) {
             templatesByTheme[cache.template.theme]++;
         }

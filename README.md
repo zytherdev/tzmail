@@ -286,7 +286,22 @@ All factories accept the same optional template and attachment options. The defa
 
 ## Templates and themes
 
-Available themes: `ThemeType.MODERN`, `CORPORATE`, `MINIMAL`, `MONOKAI`, and `SYSTEM`, each with a `light` or `dark` variant.
+The library includes 15 themes, each with `light` and `dark` variants. The original options are `ThemeType.MODERN`, `CORPORATE`, `MINIMAL`, `MONOKAI`, and `SYSTEM`; ten new palettes are also available:
+
+| Theme | Style |
+| --- | --- |
+| `AURORA` | Cool teal and violet, inspired by the northern lights. |
+| `OCEAN` | Calm navy, marine blue, and cyan. |
+| `SUNSET` | Warm coral, terracotta, amber, and plum. |
+| `LAVENDER` | Elegant violet and rose accents on soft surfaces. |
+| `FOREST` | Evergreen, moss, sage, and warm cream. |
+| `EDITORIAL` | Serif-led magazine styling with warm paper and ink tones. |
+| `PASTEL` | Friendly peach, mint, and lavender accents with readable contrast. |
+| `NEOBRUTAL` | Bold black and white with electric yellow and cobalt accents. |
+| `GLASS` | Cool blue-gray colors on solid, email-client-friendly surfaces. |
+| `MIDNIGHT` | Premium midnight navy with champagne-gold accents. |
+
+All themes use fluid, table-based email markup. On screens up to 600px wide, calls to action expand to the available width and footer links stack vertically. Use `TemplateFactory.listThemes()` to enumerate available themes and `TemplateFactory.getThemeInfo(theme)` to read each theme's description and features.
 
 ```typescript
 const service = mailer.getTemplateService();

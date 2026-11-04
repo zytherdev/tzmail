@@ -6,6 +6,16 @@ import { MonokaiTheme } from '../templates/themes/monokai.theme';
 import { ModernTheme } from '../templates/themes/modern.theme';
 import { CorporateTheme } from '../templates/themes/corporate.theme';
 import { MinimalTheme } from '../templates/themes/minimal.theme';
+import { AuroraTheme } from '../templates/themes/aurora.theme';
+import { OceanTheme } from '../templates/themes/ocean.theme';
+import { SunsetTheme } from '../templates/themes/sunset.theme';
+import { LavenderTheme } from '../templates/themes/lavender.theme';
+import { ForestTheme } from '../templates/themes/forest.theme';
+import { EditorialTheme } from '../templates/themes/editorial.theme';
+import { PastelTheme } from '../templates/themes/pastel.theme';
+import { NeoBrutalTheme } from '../templates/themes/neobrutal.theme';
+import { GlassTheme } from '../templates/themes/glass.theme';
+import { MidnightTheme } from '../templates/themes/midnight.theme';
 import { TemplateBuilder } from '../templates/base/template-builder';
 
 const SAFE_COLOR = /^(#[\da-f]{3,8}|[a-z]{1,24}|(?:rgb|rgba|hsl|hsla)\([\d.%\s,+/-]+\))$/i;
@@ -83,7 +93,17 @@ export class TemplateFactory {
     [ThemeType.MONOKAI, new MonokaiTheme()],
     [ThemeType.MODERN, new ModernTheme()],
     [ThemeType.CORPORATE, new CorporateTheme()],
-    [ThemeType.MINIMAL, new MinimalTheme()]
+    [ThemeType.MINIMAL, new MinimalTheme()],
+    [ThemeType.AURORA, new AuroraTheme()],
+    [ThemeType.OCEAN, new OceanTheme()],
+    [ThemeType.SUNSET, new SunsetTheme()],
+    [ThemeType.LAVENDER, new LavenderTheme()],
+    [ThemeType.FOREST, new ForestTheme()],
+    [ThemeType.EDITORIAL, new EditorialTheme()],
+    [ThemeType.PASTEL, new PastelTheme()],
+    [ThemeType.NEOBRUTAL, new NeoBrutalTheme()],
+    [ThemeType.GLASS, new GlassTheme()],
+    [ThemeType.MIDNIGHT, new MidnightTheme()]
   ]);
 
   static createTemplate(themeType: ThemeType, variant: 'light' | 'dark', config: ITemplateConfig): ITemplate {
@@ -143,11 +163,21 @@ export class TemplateFactory {
 
   static getThemeInfo(themeType: ThemeType): { name: string; description: string; features: string[] } {
     const themeInfo: Record<ThemeType, { name: string; description: string; features: string[] }> = {
-      [ThemeType.SYSTEM]: { name: 'System', description: 'Tema limpo e profissional com cores adaptativas', features: ['Design minimalista', 'Alta acessibilidade', 'Compatibilidade total'] },
-      [ThemeType.MONOKAI]: { name: 'Monokai', description: 'Inspirado no famoso tema de código, ideal para conteúdo técnico', features: ['Cores vibrantes', 'Destaque de sintaxe', 'Efeitos glow'] },
-      [ThemeType.MODERN]: { name: 'Modern', description: 'Design contemporâneo com gradientes e efeitos modernos', features: ['Gradientes elegantes', 'Glassmorphism', 'Animações suaves'] },
-      [ThemeType.CORPORATE]: { name: 'Corporate', description: 'Design profissional e elegante para empresas', features: ['Tipografia serifada', 'Detalhes em dourado', 'Layout estruturado'] },
-      [ThemeType.MINIMAL]: { name: 'Minimal', description: 'Design clean e focado no conteúdo', features: ['Sem distrações', 'Espaçamento generoso', 'Tipografia limpa'] }
+      [ThemeType.SYSTEM]: { name: 'System', description: 'Clean, professional palette with adaptive light and dark variants', features: ['Minimal design', 'Accessible contrast', 'Email-client friendly'] },
+      [ThemeType.MONOKAI]: { name: 'Monokai', description: 'Vibrant, code-inspired colors for technical content', features: ['Vivid accents', 'Developer aesthetic', 'Dark-mode variant'] },
+      [ThemeType.MODERN]: { name: 'Modern', description: 'Contemporary layout with refined colors and typography', features: ['Modern palette', 'Clean hierarchy', 'Responsive structure'] },
+      [ThemeType.CORPORATE]: { name: 'Corporate', description: 'Professional, structured styling for business communication', features: ['Serif typography', 'Gold details', 'Formal hierarchy'] },
+      [ThemeType.MINIMAL]: { name: 'Minimal', description: 'Content-first design with generous whitespace', features: ['Low visual noise', 'Generous spacing', 'Clean typography'] },
+      [ThemeType.AURORA]: { name: 'Aurora', description: 'Cool northern-lights colors with teal and violet accents', features: ['Teal and violet palette', 'Balanced light and dark modes', 'System-font typography'] },
+      [ThemeType.OCEAN]: { name: 'Ocean', description: 'Calm marine blues and cyan for clear, trustworthy messages', features: ['Navy and cyan palette', 'Readable contrast', 'Email-safe fonts'] },
+      [ThemeType.SUNSET]: { name: 'Sunset', description: 'Warm coral, terracotta, and amber for an energetic impression', features: ['Warm accents', 'Polished surfaces', 'Light and dark modes'] },
+      [ThemeType.LAVENDER]: { name: 'Lavender', description: 'Elegant violet and rose accents on soft, readable surfaces', features: ['Lavender palette', 'Soft visual tone', 'Accessible contrast'] },
+      [ThemeType.FOREST]: { name: 'Forest', description: 'Natural evergreen, moss, sage, and warm cream colors', features: ['Nature-inspired palette', 'Calm serif typography', 'Light and dark modes'] },
+      [ThemeType.EDITORIAL]: { name: 'Editorial', description: 'Magazine-inspired typography with warm paper and ink tones', features: ['Serif hierarchy', 'Brick-red accent', 'Content-led layout'] },
+      [ThemeType.PASTEL]: { name: 'Pastel', description: 'Soft peach, mint, and lavender accents with readable contrast', features: ['Gentle pastel palette', 'Bright, friendly tone', 'Accessible text colors'] },
+      [ThemeType.NEOBRUTAL]: { name: 'Neo Brutal', description: 'Bold black-and-white styling with electric color accents', features: ['High contrast', 'Strong typography', 'Distinctive cobalt and yellow'] },
+      [ThemeType.GLASS]: { name: 'Glass', description: 'Cool, glass-inspired colors implemented with solid email-safe surfaces', features: ['Cool blue-gray palette', 'Solid client-compatible colors', 'Clean typography'] },
+      [ThemeType.MIDNIGHT]: { name: 'Midnight', description: 'Premium midnight navy and champagne-gold accents', features: ['Luxe dark palette', 'Warm paper light mode', 'Serif typography'] }
     };
     const info = themeInfo[themeType];
     if (!info) throw new Error(`Theme ${themeType} not found`);

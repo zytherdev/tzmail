@@ -1,6 +1,7 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
 const { TemplateService } = require('../dist/services/template.service.js');
+const { TemplateFactory } = require('../dist/factories/template-factory.js');
 const { ThemeType } = require('../dist/core/enums/theme.enum.js');
 
 const wait = ms => new Promise(resolve => setTimeout(resolve, ms));
@@ -26,6 +27,37 @@ test('preview renders the captured config, escapes text, and does not trust call
   assert.match(html, /Acme &lt;b&gt;Mail&lt;\/b&gt;/);
   assert.match(html, /© Acme &lt;b&gt;2026&lt;\/b&gt;/);
   assert.doesNotMatch(html, /injected config|forged/);
+});
+
+test('all 15 themes render in light and dark mode with responsive email markup', async t => {
+  const service = new TemplateService();
+  t.after(() => service.dispose());
+  const expectedThemes = [
+    'system', 'monokai', 'modern', 'corporate', 'minimal',
+    'aurora', 'ocean', 'sunset', 'lavender', 'forest',
+    'editorial', 'pastel', 'neobrutal', 'glass', 'midnight'
+  ];
+  assert.deepEqual(TemplateFactory.listThemes().map(String), expectedThemes);
+
+  const config = plainConfig({
+    body: { title: 'Welcome', message: 'Your account is ready.', buttonText: 'Open account', buttonUrl: 'https://example.com/account' },
+    footer: { show: true, links: [{ text: 'Privacy', url: 'https://example.com/privacy' }] }
+  });
+  for (const themeType of TemplateFactory.listThemes()) {
+    const theme = TemplateFactory.getTheme(themeType);
+    assert.ok(theme, `theme ${themeType} should be registered`);
+    assert.equal(TemplateFactory.getThemeInfo(themeType).name, theme.name);
+    for (const variant of ['light', 'dark']) {
+      const html = await service.previewTemplate(themeType, variant, config, {});
+      assert.match(html, /name="viewport"/);
+      assert.match(html, /@media only screen and \(max-width: 600px\)/);
+      assert.match(html, /table class="button"/);
+      assert.match(html, /class="footer-link-cell"/);
+      assert.ok(html.includes(theme[variant].background), `${themeType}/${variant} should use its theme surface color`);
+      assert.ok(html.includes(`background-color: ${theme[variant].primary}`), `${themeType}/${variant} should use its CTA palette`);
+      assert.match(html, /color: #(000000|ffffff);/);
+    }
+  }
 });
 
 test('dangerous and injected URLs are rejected; supported HTTPS and mailto links work', async t => {

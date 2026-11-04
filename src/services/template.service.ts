@@ -190,10 +190,9 @@ export class TemplateService {
   listThemes(): ThemeType[] { return TemplateFactory.listThemes(); }
 
   getTemplateStats(): { totalTemplates: number; cachedTemplates: number; totalHits: number; cacheRequests: number; templatesByTheme: Record<ThemeType, number>; cacheHitRate: number } {
-    const templatesByTheme: Record<ThemeType, number> = {
-      [ThemeType.SYSTEM]: 0, [ThemeType.MONOKAI]: 0, [ThemeType.MODERN]: 0,
-      [ThemeType.CORPORATE]: 0, [ThemeType.MINIMAL]: 0
-    };
+    const templatesByTheme = Object.fromEntries(
+      Object.values(ThemeType).map((theme) => [theme, 0])
+    ) as Record<ThemeType, number>;
     for (const cache of this.templateCache.values()) {
       templatesByTheme[cache.template.theme]++;
     }
