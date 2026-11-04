@@ -6,6 +6,21 @@ const { ThemeType } = require('../dist/core/enums/theme.enum.js');
 
 const wait = ms => new Promise(resolve => setTimeout(resolve, ms));
 
+function contrastRatio(foreground, background) {
+  const luminance = color => {
+    const hex = color.replace(/^#/, '');
+    const normalized = hex.length === 3 ? [...hex].map(channel => channel + channel).join('') : hex;
+    if (!/^[\da-f]{6}$/i.test(normalized)) return null;
+    const channels = [0, 2, 4].map(offset => parseInt(normalized.slice(offset, offset + 2), 16) / 255);
+    return channels.map(channel => channel <= 0.04045 ? channel / 12.92 : ((channel + 0.055) / 1.055) ** 2.4)
+      .reduce((sum, channel, index) => sum + channel * [0.2126, 0.7152, 0.0722][index], 0);
+  };
+  const first = luminance(foreground);
+  const second = luminance(background);
+  if (first === null || second === null) return 0;
+  return (Math.max(first, second) + 0.05) / (Math.min(first, second) + 0.05);
+}
+
 function plainConfig(overrides = {}) {
   return {
     header: { show: true, logo: { type: 'text', text: 'Acme <b>Mail</b>' } },
@@ -53,11 +68,113 @@ test('all 15 themes render in light and dark mode with responsive email markup',
       assert.match(html, /@media only screen and \(max-width: 600px\)/);
       assert.match(html, /table class="button"/);
       assert.match(html, /class="footer-link-cell"/);
+      assert.match(html, /class="container-content"/);
+      assert.match(html, /<html lang="en" dir="ltr">/);
+      assert.ok(theme.emailStyles, `${themeType} should define an email layout profile`);
+      assert.ok(theme.emailStyles.maxWidthPx >= 560 && theme.emailStyles.maxWidthPx <= 640, `${themeType} should use a readable desktop width`);
+      assert.ok(['solid', 'outline'].includes(theme.emailStyles.button.appearance));
+      assert.ok(contrastRatio(theme[variant].text, theme[variant].background) >= 4.5, `${themeType}/${variant} body text should meet WCAG AA`);
       assert.ok(html.includes(theme[variant].background), `${themeType}/${variant} should use its theme surface color`);
-      assert.ok(html.includes(`background-color: ${theme[variant].primary}`), `${themeType}/${variant} should use its CTA palette`);
-      assert.match(html, /color: #(000000|ffffff);/);
+      assert.ok(html.includes(theme[variant].primary), `${themeType}/${variant} should use its CTA palette`);
+      assert.ok(html.includes(`background-color: ${theme[variant].background};`), `${themeType}/${variant} should pin its surface color for email clients`);
+      assert.ok(html.includes(`color: ${theme[variant].text};`), `${themeType}/${variant} should pin readable text colors`);
+      assert.doesNotMatch(html, /color:\s*inherit\s*;/i);
+      assert.doesNotMatch(html, /background-color:\s*transparent\s*;/i);
+      assert.match(html, /text-decoration:none/);
+      if (theme.emailStyles.button.appearance === 'solid') assert.match(html, /color: #(000000|ffffff);/);
+      assert.doesNotMatch(html, /backdrop-filter|linear-gradient|transition\s*:|:hover/i);
+
+      const logoIndex = html.indexOf('Acme &lt;b&gt;Mail&lt;/b&gt;');
+      const logoBlock = html.slice(html.lastIndexOf('<div style=', logoIndex), logoIndex);
+      const logoColor = logoBlock.match(/color:\s*([^;]+);/)?.[1];
+      assert.ok(contrastRatio(logoColor, theme[variant].background) >= 4.5, `${themeType}/${variant} logo should meet WCAG AA`);
+
+      const buttonStart = html.indexOf('<a class="button-link"');
+      const buttonEnd = html.indexOf('</a>', buttonStart);
+      const buttonBlock = html.slice(buttonStart, buttonEnd);
+      const buttonTextColor = buttonBlock.match(/[\s;]color:\s*([^;]+);/)?.[1];
+      const buttonBackground = theme.emailStyles.button.appearance === 'outline' ? theme[variant].background : theme[variant].primary;
+      assert.ok(contrastRatio(buttonTextColor, buttonBackground) >= 4.5, `${themeType}/${variant} CTA should meet WCAG AA`);
+
+      const linkIndex = html.indexOf('>Privacy</a>');
+      const linkBlock = html.slice(html.lastIndexOf('<a ', linkIndex), linkIndex);
+      const linkColor = linkBlock.match(/color:\s*([^;]+);/)?.[1];
+      assert.ok(contrastRatio(linkColor, theme[variant].background) >= 4.5, `${themeType}/${variant} footer link should meet WCAG AA`);
     }
   }
+});
+
+test('footer link decoration is off by default and can be enabled explicitly', async t => {
+  const service = new TemplateService();
+  t.after(() => service.dispose());
+  const config = plainConfig({
+    footer: {
+      show: true,
+      links: [{ text: 'Privacy', url: 'https://example.com/privacy' }],
+      unsubscribeText: 'Unsubscribe',
+      unsubscribeUrl: 'https://example.com/unsubscribe'
+    }
+  });
+  const defaultHtml = await service.previewTemplate(ThemeType.SYSTEM, 'dark', config, {});
+  const defaultLinks = defaultHtml.match(/<a\b[^>]*style="[^"]*"[^>]*>/g) || [];
+  assert.ok(defaultLinks.length >= 2);
+  assert.ok(defaultLinks.every(link => /text-decoration:none/.test(link)));
+
+  const underlinedHtml = await service.previewTemplate(ThemeType.SYSTEM, 'dark', { ...config, linkDecoration: 'underline' }, {});
+  const underlinedLinks = underlinedHtml.match(/<a\b[^>]*style="[^"]*"[^>]*>/g) || [];
+  assert.ok(underlinedLinks.length >= 2);
+  assert.ok(underlinedLinks.every(link => /text-decoration:underline/.test(link)));
+  assert.throws(() => service.createTemplate(ThemeType.SYSTEM, 'light', { ...config, linkDecoration: 'wavy' }), /linkDecoration/i);
+});
+
+test('body copy and CTA share the requested left/center/right alignment', async t => {
+  const service = new TemplateService();
+  t.after(() => service.dispose());
+  for (const alignment of ['left', 'center', 'right']) {
+    const html = await service.previewTemplate(ThemeType.OCEAN, 'dark', plainConfig({
+      body: { alignment, title: 'A title', message: 'Aligned copy', buttonText: 'Continue', buttonUrl: 'https://example.com/continue' }
+    }), {});
+    assert.match(html, new RegExp(`<td align="${alignment}" style="padding: 0; text-align: ${alignment};`));
+    assert.match(html, new RegExp(`<table class="button" align="${alignment}"`));
+    assert.match(html, new RegExp(`<tr><td align="${alignment}"><a class="button-link"`));
+  }
+});
+
+test('body background and text color overrides are rendered explicitly', async t => {
+  const service = new TemplateService();
+  t.after(() => service.dispose());
+  const html = await service.previewTemplate(ThemeType.OCEAN, 'dark', plainConfig({
+    body: { backgroundColor: '#101820', textColor: '#ffffff', title: 'Custom palette', message: 'Readable copy' }
+  }), {});
+  assert.match(html, /bgcolor="#101820" style="width:100%;background-color:#101820;"/);
+  assert.match(html, /color: #ffffff;/);
+});
+
+test('renders safe localized RTL output and escaped, interpolated inbox preheaders', async t => {
+  const service = new TemplateService();
+  t.after(() => service.dispose());
+  const html = await service.previewTemplate(ThemeType.SYSTEM, 'light', plainConfig({
+    language: 'pt-BR',
+    direction: 'rtl',
+    preheader: 'Olá, {{user.name}}'
+  }), { templateData: { user: { name: '<Ana>' } } });
+  assert.match(html, /<html lang="pt-BR" dir="rtl">/);
+  assert.match(html, /mso-hide:all[^>]*>Olá, &lt;Ana&gt;<\/div>/);
+  assert.doesNotMatch(html, /Olá, <Ana>/);
+  assert.throws(() => service.createTemplate(ThemeType.SYSTEM, 'light', plainConfig({ language: 'en" onload="x' })), /language tag/i);
+  assert.throws(() => service.createTemplate(ThemeType.SYSTEM, 'light', plainConfig({ direction: 'sideways' })), /text direction/i);
+  assert.throws(() => service.createTemplate(ThemeType.SYSTEM, 'light', plainConfig({ preheader: 'x'.repeat(501) })), /500/);
+});
+
+test('escapes code text before Monokai syntax highlighting', async t => {
+  const service = new TemplateService();
+  t.after(() => service.dispose());
+  const html = await service.previewTemplate(ThemeType.MONOKAI, 'dark', plainConfig({
+    body: { content: "<p>Example:</p><code>const x = '<img src=x onerror=alert(1)>';</code>" }
+  }), {});
+  assert.match(html, /&lt;img src=x onerror=alert\(1\)&gt;/);
+  assert.doesNotMatch(html, /<img src=x onerror/);
+  assert.match(html, /<pre style=/);
 });
 
 test('dangerous and injected URLs are rejected; supported HTTPS and mailto links work', async t => {

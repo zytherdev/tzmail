@@ -6,6 +6,8 @@ export declare class TemplateBuilder {
     private config;
     private variant;
     constructor(theme: ITheme, config: ITemplateConfig, variant: 'light' | 'dark');
+    private get emailStyles();
+    buildPreheader(): this;
     buildHeader(content?: string): this;
     private buildLogo;
     buildBody(content: string): this;

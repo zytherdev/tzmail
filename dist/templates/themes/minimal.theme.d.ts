@@ -1,5 +1,5 @@
 import { ThemeType } from '../../core/enums/theme.enum';
-import { ITheme, IThemeColors, ITypography, ISpacing } from './theme.interface';
+import { ITheme, IThemeColors, ITypography, ISpacing, IThemeEmailStyles } from './theme.interface';
 export declare class MinimalTheme implements ITheme {
     id: ThemeType;
     name: string;
@@ -7,6 +7,7 @@ export declare class MinimalTheme implements ITheme {
     dark: IThemeColors;
     typography: ITypography;
     spacing: ISpacing;
+    emailStyles: IThemeEmailStyles;
     minimalColors: {
         white: string;
         black: string;

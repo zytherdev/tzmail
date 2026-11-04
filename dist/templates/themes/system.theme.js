@@ -48,5 +48,41 @@ class SystemTheme {
         lg: '24px',
         xl: '32px'
     };
+    emailStyles = {
+        maxWidthPx: 600,
+        container: {
+            borderColor: 'border',
+            borderWidth: '1px',
+            borderRadius: '8px',
+            boxShadow: '0 1px 3px rgba(0, 0, 0, 0.08)'
+        },
+        header: {
+            accentColor: 'primary',
+            accentWidth: '3px',
+            horizontalPadding: '24px',
+            logoColor: 'primary',
+            logoLetterSpacing: '0.01em',
+            imageBorderRadius: '4px'
+        },
+        body: {
+            accentColor: 'primary',
+            accentWidth: '2px',
+            borderRadius: '4px',
+            boxShadow: 'none',
+            horizontalPadding: '24px',
+            lineHeight: 1.6
+        },
+        button: {
+            appearance: 'solid',
+            borderRadius: '6px',
+            borderWidth: '0px',
+            boxShadow: 'none',
+            letterSpacing: '0.01em'
+        },
+        footer: {
+            accentColor: 'secondary',
+            accentWidth: '1px'
+        }
+    };
 }
 exports.SystemTheme = SystemTheme;

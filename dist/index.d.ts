@@ -2,7 +2,7 @@ export { EmailFactory } from './factories/email-factory';
 export { TemplateFactory } from './factories/template-factory';
 export { ITemplate, ITemplateConfig } from './core/interfaces/template.interface';
 export { ThemeType } from './core/enums/theme.enum';
-export { ITheme } from './templates/themes/theme.interface';
+export { ITheme, IThemeColorToken, IThemeEmailStyles, IThemeTextTransform } from './templates/themes/theme.interface';
 export { TemplateService, ITemplateServiceOptions } from './services/template.service';
 export { EmailService } from './services/email.service';
 export { AttachmentService, IAttachmentServiceOptions } from './services/attachment.service';

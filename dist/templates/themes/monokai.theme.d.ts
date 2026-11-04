@@ -1,5 +1,5 @@
 import { ThemeType } from '../../core/enums/theme.enum';
-import { ITheme, IThemeColors, ITypography, ISpacing } from './theme.interface';
+import { ITheme, IThemeColors, ITypography, ISpacing, IThemeEmailStyles } from './theme.interface';
 export declare class MonokaiTheme implements ITheme {
     id: ThemeType;
     name: string;
@@ -25,5 +25,6 @@ export declare class MonokaiTheme implements ITheme {
         shadow: string;
         transition: string;
     };
+    emailStyles: IThemeEmailStyles;
 }
 //# sourceMappingURL=monokai.theme.d.ts.map

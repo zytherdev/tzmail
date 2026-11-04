@@ -1,6 +1,6 @@
 {
   "name": "@zyther/tzmail",
-  "version": "0.4.0",
+  "version": "0.5.0",
   "description": "TypeScript email templates, multi-provider delivery and optional BullMQ asynchronous queues.",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -14,7 +14,8 @@
     "start": "node dist/index.js",
     "lint": "eslint . --max-warnings=0",
     "typecheck": "tsc --noEmit",
-    "test": "npm run build && node --test test/*.test.cjs"
+    "test": "npm run build && node --test test/*.test.cjs",
+    "gallery:build": "npm run build && node scripts/generate-theme-gallery.cjs"
   },
   "author": "zytherdev <zyther.dev@outlook.com>",
   "homepage": "https://github.com/zytherdev/tzmail#readme",

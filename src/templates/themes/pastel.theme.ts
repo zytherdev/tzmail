@@ -1,5 +1,5 @@
 import { ThemeType } from '../../core/enums/theme.enum';
-import { ITheme, IThemeColors, ITypography, ISpacing } from './theme.interface';
+import { ITheme, IThemeColors, ITypography, ISpacing, IThemeEmailStyles } from './theme.interface';
 
 export class PastelTheme implements ITheme {
   id = ThemeType.PASTEL;
@@ -50,5 +50,43 @@ export class PastelTheme implements ITheme {
     md: '20px',
     lg: '30px',
     xl: '44px'
+  };
+
+  emailStyles: IThemeEmailStyles = {
+    maxWidthPx: 600,
+    container: {
+      borderColor: 'border',
+      borderWidth: '1px',
+      borderRadius: '14px',
+      boxShadow: '0 2px 10px rgba(53, 45, 54, 0.08)'
+    },
+    header: {
+      accentColor: 'primary',
+      accentWidth: '3px',
+      horizontalPadding: '28px',
+      logoColor: 'primary',
+      logoFontFamily: 'Georgia, "Times New Roman", serif',
+      logoLetterSpacing: '0.03em',
+      imageBorderRadius: '10px'
+    },
+    body: {
+      accentColor: 'secondary',
+      accentWidth: '2px',
+      borderRadius: '10px',
+      boxShadow: 'none',
+      horizontalPadding: '28px',
+      lineHeight: 1.6
+    },
+    button: {
+      appearance: 'solid',
+      borderRadius: '18px',
+      borderWidth: '1px',
+      boxShadow: 'none',
+      letterSpacing: '0.01em'
+    },
+    footer: {
+      accentColor: 'border',
+      accentWidth: '1px'
+    }
   };
 }

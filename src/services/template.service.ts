@@ -30,6 +30,7 @@ export interface ITemplateServiceOptions {
 type TemplateOptions = ITemplateServiceOptions;
 
 const VALID_THEMES = Object.values(ThemeType);
+const SAFE_LANGUAGE_TAG = /^[A-Za-z]{2,8}(?:-[A-Za-z0-9]{1,8})*$/;
 const SAFE_COLOR = /^(#[\da-f]{3,8}|[a-z]{1,24}|(?:rgb|rgba|hsl|hsla)\([\d.%\s,+/-]+\))$/i;
 const SAFE_COLOR_NAMES = new Set(('transparent inherit currentcolor aliceblue antiquewhite aqua aquamarine azure beige bisque black blanchedalmond blue blueviolet brown burlywood cadetblue chartreuse chocolate coral cornflowerblue cornsilk crimson cyan darkblue darkcyan darkgoldenrod darkgray darkgrey darkgreen darkkhaki darkmagenta darkolivegreen darkorange darkorchid darkred darksalmon darkseagreen darkslateblue darkslategray darkslategrey darkturquoise darkviolet deeppink deepskyblue dimgray dimgrey dodgerblue firebrick floralwhite forestgreen fuchsia gainsboro ghostwhite gold goldenrod gray grey green greenyellow honeydew hotpink indianred indigo ivory khaki lavender lavenderblush lawngreen lemonchiffon lightblue lightcoral lightcyan lightgoldenrodyellow lightgray lightgrey lightgreen lightpink lightsalmon lightseagreen lightskyblue lightslategray lightslategrey lightsteelblue lightyellow lime limegreen linen magenta maroon mediumaquamarine mediumblue mediumorchid mediumpurple mediumseagreen mediumslateblue mediumspringgreen mediumturquoise mediumvioletred midnightblue mintcream mistyrose moccasin navajowhite navy oldlace olive olivedrab orange orangered orchid palegoldenrod palegreen paleturquoise palevioletred papayawhip peachpuff peru pink plum powderblue purple rebeccapurple red rosybrown royalblue saddlebrown salmon sandybrown seagreen seashell sienna silver skyblue slateblue slategray slategrey snow springgreen steelblue tan teal thistle tomato turquoise violet wheat white whitesmoke yellow yellowgreen').split(' '));
 const SOCIAL_PLATFORMS = new Set([
@@ -239,6 +240,14 @@ export class TemplateService {
       if (value !== undefined && !allowed.includes(value)) errors.push(`Invalid ${label}: ${value}`);
     };
 
+    if (config.language !== undefined && (typeof config.language !== 'string' || config.language.length > 63 || !SAFE_LANGUAGE_TAG.test(config.language))) {
+      errors.push('Invalid template language tag');
+    }
+    enumValue(config.direction, ['ltr', 'rtl', 'auto'], 'template text direction');
+    enumValue(config.linkDecoration, ['none', 'underline'], 'template linkDecoration');
+    if (config.preheader !== undefined && (typeof config.preheader !== 'string' || config.preheader.length > 500 || /[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F]/.test(config.preheader))) {
+      errors.push('preheader must be a string of at most 500 printable characters');
+    }
     enumValue(config.layout, ['full', 'minimal'], 'layout');
     enumValue(config.spacing, ['compact', 'normal', 'relaxed'], 'spacing');
     enumValue(config.borderRadius, ['none', 'small', 'medium', 'large'], 'borderRadius');

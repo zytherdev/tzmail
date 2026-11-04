@@ -1,6 +1,6 @@
 
 import { ThemeType } from '../../core/enums/theme.enum';
-import { ITheme, IThemeColors, ITypography, ISpacing } from './theme.interface';
+import { ITheme, IThemeColors, ITypography, ISpacing, IThemeEmailStyles } from './theme.interface';
 
 export class CorporateTheme implements ITheme {
   id = ThemeType.CORPORATE;
@@ -112,5 +112,45 @@ export class CorporateTheme implements ITheme {
     sidebarWidth: '200px',
     headerHeight: '80px',
     footerHeight: '120px'
+  };
+
+  emailStyles: IThemeEmailStyles = {
+    maxWidthPx: 600,
+    container: {
+      borderColor: 'border',
+      borderWidth: '1px',
+      borderRadius: '4px',
+      boxShadow: 'none'
+    },
+    header: {
+      accentColor: 'primary',
+      accentWidth: '3px',
+      horizontalPadding: '28px',
+      logoColor: 'text',
+      logoFontFamily: '"Playfair Display", "Georgia", "Times New Roman", serif',
+      logoTextTransform: 'uppercase',
+      logoLetterSpacing: '1px',
+      imageBorderRadius: '2px'
+    },
+    body: {
+      accentColor: 'secondary',
+      accentWidth: '1px',
+      borderRadius: '4px',
+      boxShadow: 'none',
+      horizontalPadding: '32px',
+      lineHeight: 1.6
+    },
+    button: {
+      appearance: 'solid',
+      borderRadius: '2px',
+      borderWidth: '1px',
+      boxShadow: 'none',
+      textTransform: 'uppercase',
+      letterSpacing: '0.5px'
+    },
+    footer: {
+      accentColor: 'border',
+      accentWidth: '1px'
+    }
   };
 }

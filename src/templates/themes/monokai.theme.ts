@@ -1,6 +1,6 @@
 
 import { ThemeType } from '../../core/enums/theme.enum';
-import { ITheme, IThemeColors, ITypography, ISpacing } from './theme.interface';
+import { ITheme, IThemeColors, ITypography, ISpacing, IThemeEmailStyles } from './theme.interface';
 
 export class MonokaiTheme implements ITheme {
   id = ThemeType.MONOKAI;
@@ -74,5 +74,44 @@ export class MonokaiTheme implements ITheme {
     glow: '0 0 10px rgba(249, 38, 114, 0.3)',
     shadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
     transition: 'all 0.3s ease'
+  };
+
+  emailStyles: IThemeEmailStyles = {
+    maxWidthPx: 600,
+    container: {
+      borderColor: 'border',
+      borderWidth: '1px',
+      borderRadius: '4px',
+      boxShadow: '0 2px 8px rgba(0, 0, 0, 0.08)'
+    },
+    header: {
+      accentColor: 'primary',
+      accentWidth: '3px',
+      horizontalPadding: '24px',
+      logoColor: 'text',
+      logoFontFamily: '"SF Mono", "Monaco", "Inconsolata", "Fira Code", monospace',
+      logoLetterSpacing: '0.02em',
+      imageBorderRadius: '3px'
+    },
+    body: {
+      accentColor: 'secondary',
+      accentWidth: '2px',
+      borderRadius: '4px',
+      boxShadow: 'none',
+      horizontalPadding: '24px',
+      lineHeight: 1.6
+    },
+    button: {
+      appearance: 'solid',
+      borderRadius: '3px',
+      borderWidth: '1px',
+      boxShadow: 'none',
+      textTransform: 'uppercase',
+      letterSpacing: '0.04em'
+    },
+    footer: {
+      accentColor: 'secondary',
+      accentWidth: '2px'
+    }
   };
 }

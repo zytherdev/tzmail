@@ -1,5 +1,5 @@
 import { ThemeType } from '../../core/enums/theme.enum';
-import { ITheme, IThemeColors, ITypography, ISpacing } from './theme.interface';
+import { ITheme, IThemeColors, ITypography, ISpacing, IThemeEmailStyles } from './theme.interface';
 export declare class LavenderTheme implements ITheme {
     id: ThemeType;
     name: string;
@@ -7,5 +7,6 @@ export declare class LavenderTheme implements ITheme {
     dark: IThemeColors;
     typography: ITypography;
     spacing: ISpacing;
+    emailStyles: IThemeEmailStyles;
 }
 //# sourceMappingURL=lavender.theme.d.ts.map

@@ -19,6 +19,7 @@ import { MidnightTheme } from '../templates/themes/midnight.theme';
 import { TemplateBuilder } from '../templates/base/template-builder';
 
 const SAFE_COLOR = /^(#[\da-f]{3,8}|[a-z]{1,24}|(?:rgb|rgba|hsl|hsla)\([\d.%\s,+/-]+\))$/i;
+const SAFE_LANGUAGE_TAG = /^[A-Za-z]{2,8}(?:-[A-Za-z0-9]{1,8})*$/;
 const SAFE_NAMED_COLORS = new Set(('transparent inherit currentcolor aliceblue antiquewhite aqua aquamarine azure beige bisque black blanchedalmond blue blueviolet brown burlywood cadetblue chartreuse chocolate coral cornflowerblue cornsilk crimson cyan darkblue darkcyan darkgoldenrod darkgray darkgrey darkgreen darkkhaki darkmagenta darkolivegreen darkorange darkorchid darkred darksalmon darkseagreen darkslateblue darkslategray darkslategrey darkturquoise darkviolet deeppink deepskyblue dimgray dimgrey dodgerblue firebrick floralwhite forestgreen fuchsia gainsboro ghostwhite gold goldenrod gray grey green greenyellow honeydew hotpink indianred indigo ivory khaki lavender lavenderblush lawngreen lemonchiffon lightblue lightcoral lightcyan lightgoldenrodyellow lightgray lightgrey lightgreen lightpink lightsalmon lightseagreen lightskyblue lightslategray lightslategrey lightsteelblue lightyellow lime limegreen linen magenta maroon mediumaquamarine mediumblue mediumorchid mediumpurple mediumseagreen mediumslateblue mediumspringgreen mediumturquoise mediumvioletred midnightblue mintcream mistyrose moccasin navajowhite navy oldlace olive olivedrab orange orangered orchid palegoldenrod palegreen paleturquoise palevioletred papayawhip peachpuff peru pink plum powderblue purple rebeccapurple red rosybrown royalblue saddlebrown salmon sandybrown seagreen seashell sienna silver skyblue slateblue slategray slategrey snow springgreen steelblue tan teal thistle tomato turquoise violet wheat white whitesmoke yellow yellowgreen').split(' '));
 function cssColor(value: string | undefined, fallback: string): string {
   if (value === undefined) return fallback;
@@ -52,6 +53,7 @@ function interpolate(value: string | undefined, variables: Record<string, unknow
 function resolveTemplateConfig(config: ITemplateConfig, variables: Record<string, unknown>): ITemplateConfig {
   return {
     ...config,
+    preheader: interpolate(config.preheader, variables),
     header: config.header ? {
       ...config.header,
       logo: config.header.logo ? {
@@ -111,6 +113,14 @@ export class TemplateFactory {
     if (!theme) throw new Error(`Theme ${themeType} not found`);
     if (variant !== 'light' && variant !== 'dark') throw new Error(`Invalid template variant: ${variant}`);
     if (!config || typeof config !== 'object') throw new Error('Template config must be an object');
+    if (config.language !== undefined && (typeof config.language !== 'string' || config.language.length > 63 || !SAFE_LANGUAGE_TAG.test(config.language))) {
+      throw new Error('Invalid template language tag');
+    }
+    if (config.direction !== undefined && !['ltr', 'rtl', 'auto'].includes(config.direction)) throw new Error('Invalid template text direction');
+    if (config.linkDecoration !== undefined && !['none', 'underline'].includes(config.linkDecoration)) throw new Error('Invalid template linkDecoration');
+    if (config.preheader !== undefined && (typeof config.preheader !== 'string' || config.preheader.length > 500 || /[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F]/.test(config.preheader))) {
+      throw new Error('preheader must be a string of at most 500 printable characters');
+    }
 
     return {
       name: `${themeType}_${variant}`,
@@ -130,26 +140,29 @@ export class TemplateFactory {
         if (!['left', 'center', 'right'].includes(alignment)) throw new Error('Invalid body alignment');
         const fontSize = body.fontSize ?? 14;
         if (!Number.isFinite(fontSize) || fontSize < 8 || fontSize > 72) throw new Error('Invalid body font size');
-        const background = cssColor(body.backgroundColor, 'transparent');
-        const textColor = cssColor(body.textColor, 'inherit');
+        const background = cssColor(body.backgroundColor, theme[variant].background);
+        const textColor = cssColor(body.textColor, theme[variant].text);
         cssColor(renderConfig.header?.backgroundColor, 'transparent');
         cssColor(renderConfig.header?.textColor, 'inherit');
         cssColor(renderConfig.footer?.backgroundColor, 'transparent');
         cssColor(renderConfig.footer?.textColor, 'inherit');
         const titleFontSize = fontSize + 7;
+        const bodyCellStyle = `padding: 0; text-align: ${alignment}; background-color: ${background}; color: ${textColor}; font-size: ${fontSize}px; font-family: ${theme.typography.fontFamily};`;
+        const titleStyle = `margin: 0 0 16px 0; color: ${textColor}; font-family: ${theme.typography.fontFamily}; font-size: ${titleFontSize}px; font-weight: ${theme.typography.fontWeights.bold}; line-height: 1.3; text-align: ${alignment};`;
+        const messageStyle = `margin: 0; color: ${textColor}; font-family: ${theme.typography.fontFamily}; font-size: ${fontSize}px; line-height: 1.6; text-align: ${alignment};`;
         // body.content é o único campo da configuração intencionalmente tratado como HTML confiável.
         // Título, mensagem e valores de estilo são sempre escapados/validados e não viram HTML.
         const bodyContent = body.content ?? `
           <table width="100%" cellpadding="0" cellspacing="0" role="presentation">
             <tr>
-              <td style="padding: 20px; text-align: ${alignment}; background-color: ${background}; color: ${textColor}; font-size: ${fontSize}px;">
-                <h2 style="margin: 0 0 16px 0; font-size: ${titleFontSize}px; line-height: 1.3;">${escapeHtml(body.title ?? 'Hello!')}</h2>
-                <p style="margin: 0; line-height: 1.6;">${escapeHtml(body.message ?? 'This is an email generated with tzMail.')}</p>
+              <td align="${alignment}" style="${escapeHtml(bodyCellStyle)}">
+                <h2 style="${escapeHtml(titleStyle)}">${escapeHtml(body.title ?? 'Hello!')}</h2>
+                <p style="${escapeHtml(messageStyle)}">${escapeHtml(body.message ?? 'This is an email generated with tzMail.')}</p>
               </td>
             </tr>
           </table>`;
 
-        builder.buildHeader(typeof data?.headerContent === 'string' ? data.headerContent : '').buildBody(bodyContent);
+        builder.buildPreheader().buildHeader(typeof data?.headerContent === 'string' ? data.headerContent : '').buildBody(bodyContent);
         if (body.buttonText && body.buttonUrl) {
           builder.buildButton(body.buttonText, body.buttonUrl, body.buttonVariant || 'primary');
         }

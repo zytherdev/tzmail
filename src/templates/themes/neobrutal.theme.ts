@@ -1,5 +1,5 @@
 import { ThemeType } from '../../core/enums/theme.enum';
-import { ITheme, IThemeColors, ITypography, ISpacing } from './theme.interface';
+import { ITheme, IThemeColors, ITypography, ISpacing, IThemeEmailStyles } from './theme.interface';
 
 export class NeoBrutalTheme implements ITheme {
   id = ThemeType.NEOBRUTAL;
@@ -50,5 +50,45 @@ export class NeoBrutalTheme implements ITheme {
     md: '16px',
     lg: '24px',
     xl: '36px'
+  };
+
+  emailStyles: IThemeEmailStyles = {
+    maxWidthPx: 600,
+    container: {
+      borderColor: 'border',
+      borderWidth: '3px',
+      borderRadius: '0',
+      boxShadow: 'none'
+    },
+    header: {
+      accentColor: 'primary',
+      accentWidth: '8px',
+      horizontalPadding: '24px',
+      logoColor: 'text',
+      logoFontFamily: 'Arial, Helvetica, "Liberation Sans", sans-serif',
+      logoTextTransform: 'uppercase',
+      logoLetterSpacing: '0.04em',
+      imageBorderRadius: '0'
+    },
+    body: {
+      accentColor: 'secondary',
+      accentWidth: '4px',
+      borderRadius: '0',
+      boxShadow: 'none',
+      horizontalPadding: '28px',
+      lineHeight: 1.55
+    },
+    button: {
+      appearance: 'solid',
+      borderRadius: '0',
+      borderWidth: '3px',
+      boxShadow: 'none',
+      textTransform: 'uppercase',
+      letterSpacing: '0.04em'
+    },
+    footer: {
+      accentColor: 'border',
+      accentWidth: '2px'
+    }
   };
 }

@@ -48,6 +48,43 @@ class MinimalTheme {
         lg: '32px',
         xl: '48px'
     };
+    emailStyles = {
+        maxWidthPx: 600,
+        container: {
+            borderColor: 'border',
+            borderWidth: '1px',
+            borderRadius: '2px',
+            boxShadow: 'none'
+        },
+        header: {
+            accentColor: 'primary',
+            accentWidth: '2px',
+            horizontalPadding: '24px',
+            logoColor: 'text',
+            logoLetterSpacing: '0.02em',
+            imageBorderRadius: '0px'
+        },
+        body: {
+            accentColor: 'border',
+            accentWidth: '1px',
+            borderRadius: '2px',
+            boxShadow: 'none',
+            horizontalPadding: '24px',
+            lineHeight: 1.6
+        },
+        button: {
+            appearance: 'outline',
+            borderRadius: '2px',
+            borderWidth: '1px',
+            boxShadow: 'none',
+            textTransform: 'none',
+            letterSpacing: '0.02em'
+        },
+        footer: {
+            accentColor: 'border',
+            accentWidth: '1px'
+        }
+    };
     // cores minimalistas
     minimalColors = {
         white: '#ffffff',

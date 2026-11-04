@@ -1,5 +1,5 @@
 import { ThemeType } from '../../core/enums/theme.enum';
-import { ITheme, IThemeColors, ITypography, ISpacing } from './theme.interface';
+import { ITheme, IThemeColors, ITypography, ISpacing, IThemeEmailStyles } from './theme.interface';
 
 export class MidnightTheme implements ITheme {
   id = ThemeType.MIDNIGHT;
@@ -50,5 +50,45 @@ export class MidnightTheme implements ITheme {
     md: '18px',
     lg: '28px',
     xl: '44px'
+  };
+
+  emailStyles: IThemeEmailStyles = {
+    maxWidthPx: 600,
+    container: {
+      borderColor: 'border',
+      borderWidth: '1px',
+      borderRadius: '4px',
+      boxShadow: 'none'
+    },
+    header: {
+      accentColor: 'primary',
+      accentWidth: '3px',
+      horizontalPadding: '32px',
+      logoColor: 'primary',
+      logoFontFamily: 'Georgia, "Times New Roman", serif',
+      logoTextTransform: 'none',
+      logoLetterSpacing: '0.04em',
+      imageBorderRadius: '2px'
+    },
+    body: {
+      accentColor: 'secondary',
+      accentWidth: '1px',
+      borderRadius: '4px',
+      boxShadow: 'none',
+      horizontalPadding: '32px',
+      lineHeight: 1.65
+    },
+    button: {
+      appearance: 'outline',
+      borderRadius: '2px',
+      borderWidth: '1px',
+      boxShadow: 'none',
+      textTransform: 'uppercase',
+      letterSpacing: '0.08em'
+    },
+    footer: {
+      accentColor: 'secondary',
+      accentWidth: '1px'
+    }
   };
 }

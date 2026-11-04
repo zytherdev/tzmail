@@ -1,5 +1,5 @@
 import { ThemeType } from '../../core/enums/theme.enum';
-import { ITheme, IThemeColors, ITypography, ISpacing } from './theme.interface';
+import { ITheme, IThemeColors, ITypography, ISpacing, IThemeEmailStyles } from './theme.interface';
 export declare class CorporateTheme implements ITheme {
     id: ThemeType;
     name: string;
@@ -61,5 +61,6 @@ export declare class CorporateTheme implements ITheme {
         headerHeight: string;
         footerHeight: string;
     };
+    emailStyles: IThemeEmailStyles;
 }
 //# sourceMappingURL=corporate.theme.d.ts.map

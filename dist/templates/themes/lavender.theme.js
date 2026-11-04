@@ -48,5 +48,44 @@ class LavenderTheme {
         lg: '30px',
         xl: '44px'
     };
+    emailStyles = {
+        maxWidthPx: 600,
+        container: {
+            borderColor: 'border',
+            borderWidth: '1px',
+            borderRadius: '16px',
+            boxShadow: 'none'
+        },
+        header: {
+            accentColor: 'primary',
+            accentWidth: '3px',
+            horizontalPadding: '28px',
+            logoColor: 'primary',
+            logoFontFamily: 'Arial, "Segoe UI", system-ui, sans-serif',
+            logoTextTransform: 'none',
+            logoLetterSpacing: '0.02em',
+            imageBorderRadius: '12px'
+        },
+        body: {
+            accentColor: 'secondary',
+            accentWidth: '2px',
+            borderRadius: '12px',
+            boxShadow: 'none',
+            horizontalPadding: '28px',
+            lineHeight: 1.65
+        },
+        button: {
+            appearance: 'solid',
+            borderRadius: '10px',
+            borderWidth: '1px',
+            boxShadow: 'none',
+            textTransform: 'none',
+            letterSpacing: '0.01em'
+        },
+        footer: {
+            accentColor: 'secondary',
+            accentWidth: '2px'
+        }
+    };
 }
 exports.LavenderTheme = LavenderTheme;

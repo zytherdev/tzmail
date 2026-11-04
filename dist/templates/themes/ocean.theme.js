@@ -48,5 +48,43 @@ class OceanTheme {
         lg: '24px',
         xl: '36px'
     };
+    emailStyles = {
+        maxWidthPx: 600,
+        container: {
+            borderColor: 'border',
+            borderWidth: '1px',
+            borderRadius: '12px',
+            boxShadow: '0 2px 8px rgba(0, 0, 0, 0.08)'
+        },
+        header: {
+            accentColor: 'secondary',
+            accentWidth: '4px',
+            horizontalPadding: '28px',
+            logoColor: 'primary',
+            logoFontFamily: 'Arial, Helvetica, sans-serif',
+            logoLetterSpacing: '0.02em',
+            imageBorderRadius: '8px'
+        },
+        body: {
+            accentColor: 'primary',
+            accentWidth: '3px',
+            borderRadius: '8px',
+            boxShadow: '0 1px 4px rgba(0, 0, 0, 0.06)',
+            horizontalPadding: '28px',
+            lineHeight: 1.6
+        },
+        button: {
+            appearance: 'solid',
+            borderRadius: '6px',
+            borderWidth: '1px',
+            boxShadow: 'none',
+            textTransform: 'none',
+            letterSpacing: '0.01em'
+        },
+        footer: {
+            accentColor: 'secondary',
+            accentWidth: '2px'
+        }
+    };
 }
 exports.OceanTheme = OceanTheme;

@@ -48,6 +48,43 @@ class ModernTheme {
         lg: '32px',
         xl: '48px'
     };
+    emailStyles = {
+        maxWidthPx: 600,
+        container: {
+            borderColor: 'border',
+            borderWidth: '1px',
+            borderRadius: '12px',
+            boxShadow: 'none'
+        },
+        header: {
+            accentColor: 'primary',
+            accentWidth: '3px',
+            horizontalPadding: '24px',
+            logoColor: 'primary',
+            logoFontFamily: '"Inter", "Segoe UI", sans-serif',
+            logoLetterSpacing: '0.02em',
+            imageBorderRadius: '8px'
+        },
+        body: {
+            accentColor: 'primary',
+            accentWidth: '2px',
+            borderRadius: '8px',
+            boxShadow: 'none',
+            horizontalPadding: '24px',
+            lineHeight: 1.55
+        },
+        button: {
+            appearance: 'solid',
+            borderRadius: '8px',
+            borderWidth: '1px',
+            boxShadow: 'none',
+            letterSpacing: '0.01em'
+        },
+        footer: {
+            accentColor: 'secondary',
+            accentWidth: '1px'
+        }
+    };
     gradients = {
         primary: 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)',
         secondary: 'linear-gradient(135deg, #64748b 0%, #94a3b8 100%)',

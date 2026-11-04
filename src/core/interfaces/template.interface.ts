@@ -9,6 +9,14 @@ export interface ITemplate {
 }
 
 export interface ITemplateConfig {
+  /** BCP 47 language tag written to the generated document; defaults to en. */
+  language?: string;
+  /** Text direction for right-to-left or automatic-script content; defaults to ltr. */
+  direction?: 'ltr' | 'rtl' | 'auto';
+  /** Hidden inbox preview text shown beside the subject; limited to 500 characters. */
+  preheader?: string;
+  /** Decoration for generated footer links; defaults to none. Set to underline when desired. */
+  linkDecoration?: 'none' | 'underline';
   header?: IHeaderConfig;
   body?: IBodyConfig;
   footer?: IFooterConfig;

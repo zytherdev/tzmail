@@ -48,5 +48,43 @@ class SunsetTheme {
         lg: '30px',
         xl: '44px'
     };
+    emailStyles = {
+        maxWidthPx: 600,
+        container: {
+            borderColor: 'border',
+            borderWidth: '1px',
+            borderRadius: '12px',
+            boxShadow: '0 2px 8px rgba(0, 0, 0, 0.08)'
+        },
+        header: {
+            accentColor: 'primary',
+            accentWidth: '3px',
+            horizontalPadding: '30px',
+            logoColor: 'primary',
+            logoFontFamily: 'Georgia, "Times New Roman", serif',
+            logoTextTransform: 'uppercase',
+            logoLetterSpacing: '1.2px',
+            imageBorderRadius: '6px'
+        },
+        body: {
+            accentColor: 'secondary',
+            accentWidth: '2px',
+            borderRadius: '8px',
+            boxShadow: 'none',
+            horizontalPadding: '30px',
+            lineHeight: 1.6
+        },
+        button: {
+            appearance: 'solid',
+            borderRadius: '6px',
+            borderWidth: '1px',
+            boxShadow: 'none',
+            letterSpacing: '0.4px'
+        },
+        footer: {
+            accentColor: 'border',
+            accentWidth: '1px'
+        }
+    };
 }
 exports.SunsetTheme = SunsetTheme;

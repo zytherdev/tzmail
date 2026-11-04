@@ -305,6 +305,28 @@ All themes use fluid, table-based email markup. On screens up to 600px wide, cal
 
 Open the standalone [interactive theme gallery](examples/theme-gallery.html) in a browser to compare all 15 themes, switch between light and dark variants, search by theme name, and inspect expanded previews. It embeds sample emails rendered by the current `TemplateFactory` and requires no server or external assets.
 
+Each built-in `ITheme` now includes an `emailStyles` profile for desktop width, container surfaces, header/body/footer accents, spacing, and solid or outline CTAs. Color accents are palette references, so the same profile adapts to light and dark variants. Custom `ITheme` implementations can omit `emailStyles` and receive conservative email-safe defaults. The renderer avoids CSS gradients, hover-only behavior, animation, and glass effects that are unreliable in email clients.
+
+When theme-selected logo text, outline CTA text, or default footer copy would have insufficient contrast against its surface, the renderer uses a readable text-color fallback while preserving the theme accent on borders and fills. Explicit caller-supplied header/footer text colors remain respected.
+
+Body copy and its CTA share the configured `body.alignment` (`left`, `center`, or `right`); `body.backgroundColor` and `body.textColor` can override the theme's body palette. Footer navigation and unsubscribe links have no underline by default. Set `linkDecoration: 'underline'` when underlined links are preferred; the setting applies consistently to both.
+
+Templates also support `language` (default `en`), `direction` (`ltr`, `rtl`, or `auto`; default `ltr`), and a hidden `preheader` (up to 500 printable characters) for inbox previews. Preheaders support the same escaped per-recipient placeholders as other text fields. After changing a theme or the renderer, refresh the gallery's embedded samples with `npm run gallery:build`.
+
+```typescript
+const html = await mailer.getTemplateService().previewTemplate(
+  ThemeType.MIDNIGHT,
+  'dark',
+  {
+    language: 'ar',
+    direction: 'rtl',
+    preheader: 'مرحبًا، {{user.firstName}} — your account update is ready.',
+    body: { title: 'Welcome, {{user.firstName}}', message: 'Your update is available.' }
+  },
+  { templateData: { user: { firstName: 'Samira' } } }
+);
+```
+
 ```typescript
 const service = mailer.getTemplateService();
 

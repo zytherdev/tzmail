@@ -1,5 +1,5 @@
 import { ThemeType } from '../../core/enums/theme.enum';
-import { ITheme, IThemeColors, ITypography, ISpacing } from './theme.interface';
+import { ITheme, IThemeColors, ITypography, ISpacing, IThemeEmailStyles } from './theme.interface';
 export declare class ModernTheme implements ITheme {
     id: ThemeType;
     name: string;
@@ -7,6 +7,7 @@ export declare class ModernTheme implements ITheme {
     dark: IThemeColors;
     typography: ITypography;
     spacing: ISpacing;
+    emailStyles: IThemeEmailStyles;
     gradients: {
         primary: string;
         secondary: string;

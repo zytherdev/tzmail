@@ -1,5 +1,5 @@
 import { ThemeType } from '../../core/enums/theme.enum';
-import { ITheme, IThemeColors, ITypography, ISpacing } from './theme.interface';
+import { ITheme, IThemeColors, ITypography, ISpacing, IThemeEmailStyles } from './theme.interface';
 
 export class AuroraTheme implements ITheme {
   id = ThemeType.AURORA;
@@ -50,5 +50,42 @@ export class AuroraTheme implements ITheme {
     md: '16px',
     lg: '24px',
     xl: '36px'
+  };
+
+  emailStyles: IThemeEmailStyles = {
+    maxWidthPx: 600,
+    container: {
+      borderColor: 'border',
+      borderWidth: '1px',
+      borderRadius: '12px',
+      boxShadow: 'none'
+    },
+    header: {
+      accentColor: 'primary',
+      accentWidth: '3px',
+      horizontalPadding: '24px',
+      logoColor: 'primary',
+      imageBorderRadius: '8px'
+    },
+    body: {
+      accentColor: 'primary',
+      accentWidth: '3px',
+      borderRadius: '10px',
+      boxShadow: 'none',
+      horizontalPadding: '24px',
+      lineHeight: 1.55
+    },
+    button: {
+      appearance: 'solid',
+      borderRadius: '6px',
+      borderWidth: '1px',
+      boxShadow: 'none',
+      textTransform: 'none',
+      letterSpacing: '0.01em'
+    },
+    footer: {
+      accentColor: 'secondary',
+      accentWidth: '1px'
+    }
   };
 }

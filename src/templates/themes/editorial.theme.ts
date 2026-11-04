@@ -1,5 +1,5 @@
 import { ThemeType } from '../../core/enums/theme.enum';
-import { ITheme, IThemeColors, ITypography, ISpacing } from './theme.interface';
+import { ITheme, IThemeColors, ITypography, ISpacing, IThemeEmailStyles } from './theme.interface';
 
 export class EditorialTheme implements ITheme {
   id = ThemeType.EDITORIAL;
@@ -50,5 +50,44 @@ export class EditorialTheme implements ITheme {
     md: '16px',
     lg: '24px',
     xl: '36px'
+  };
+
+  emailStyles: IThemeEmailStyles = {
+    maxWidthPx: 600,
+    container: {
+      borderColor: 'border',
+      borderWidth: '1px',
+      borderRadius: '3px',
+      boxShadow: 'none'
+    },
+    header: {
+      accentColor: 'primary',
+      accentWidth: '2px',
+      horizontalPadding: '28px',
+      logoColor: 'primary',
+      logoFontFamily: 'Georgia, "Times New Roman", Times, serif',
+      logoLetterSpacing: '0.02em',
+      imageBorderRadius: '2px'
+    },
+    body: {
+      accentColor: 'primary',
+      accentWidth: '2px',
+      borderRadius: '2px',
+      boxShadow: 'none',
+      horizontalPadding: '28px',
+      lineHeight: 1.65
+    },
+    button: {
+      appearance: 'solid',
+      borderRadius: '2px',
+      borderWidth: '1px',
+      boxShadow: 'none',
+      textTransform: 'uppercase',
+      letterSpacing: '0.04em'
+    },
+    footer: {
+      accentColor: 'secondary',
+      accentWidth: '1px'
+    }
   };
 }

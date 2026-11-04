@@ -1,5 +1,5 @@
 import { ThemeType } from '../../core/enums/theme.enum';
-import { ITheme } from './theme.interface';
+import { ITheme, IThemeEmailStyles } from './theme.interface';
 export declare class SystemTheme implements ITheme {
     id: ThemeType;
     name: string;
@@ -46,5 +46,6 @@ export declare class SystemTheme implements ITheme {
         lg: string;
         xl: string;
     };
+    emailStyles: IThemeEmailStyles;
 }
 //# sourceMappingURL=system.theme.d.ts.map
