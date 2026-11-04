@@ -1,25 +1,25 @@
 # tzmail
 
-`@zyther/tzmail` é uma biblioteca TypeScript/Node.js para gerar templates e enviar mensagens por SMTP, SendGrid, Amazon SES ou Mailgun. Inclui temas prontos, validação básica, cache limitado, anexos e factories independentes por provedor.
+`@zyther/tzmail` is a TypeScript/Node.js library for generating templates and sending messages via SMTP, SendGrid, Amazon SES, or Mailgun. It includes ready-made themes, basic validation, bounded caching, attachments, and independent provider factories.
 
-> **Escopo:** tzmail é uma camada de templates, transportes e fila de envio, não uma plataforma completa de campanhas. Para alto volume, use uma fila durável, defina idempotência e retries e coordene limites com o provedor. SMTP ou API aceitar a mensagem não garante entrega na caixa de entrada.
+> **Scope:** tzmail is a templates, transports, and sending queue layer, not a complete campaign platform. For high volume, use a durable queue, define idempotency and retries, and coordinate limits with the provider. SMTP or an API accepting the message does not guarantee inbox delivery.
 
-## Requisitos e instalação
+## Requirements and installation
 
-- Node.js 20 ou superior.
-- `nodemailer` 6.9, 7 ou 8, instalado como peer dependency.
-- Para usar Amazon SES, instale também o peer opcional `@aws-sdk/client-sesv2`; SendGrid e Mailgun usam `fetch` nativo do Node e não precisam dos SDKs do fornecedor.
-- Para usar a fila assíncrona, instale o peer opcional `bullmq` e disponibilize Redis compatível.
+- Node.js 20 or later.
+- `nodemailer` 6.9, 7, or 8, installed as a peer dependency.
+- To use Amazon SES, also install the optional peer `@aws-sdk/client-sesv2`; SendGrid and Mailgun use Node's native `fetch` and do not need the vendor SDKs.
+- To use the asynchronous queue, install the optional peer `bullmq` and provide a compatible Redis instance.
 
 ```bash
 npm install @zyther/tzmail nodemailer
-# Opcional, somente se usar a fila:
+# Optional, only if using the queue:
 npm install bullmq
 ```
 
-## Início rápido
+## Quick start
 
-Use variáveis de ambiente ou um secret manager para credenciais; não grave senhas SMTP no código-fonte.
+Use environment variables or a secret manager for credentials; do not store SMTP passwords in source code.
 
 ```typescript
 import {
@@ -32,7 +32,7 @@ import {
 const smtp: IEmailConfig = {
   host: process.env.SMTP_HOST!,
   port: Number(process.env.SMTP_PORT ?? 587),
-  secure: false, // TLS implícito normalmente usa 465; 587 normalmente negocia STARTTLS
+  secure: false, // Implicit TLS usually uses 465; 587 usually negotiates STARTTLS
   auth: {
     user: process.env.SMTP_USER!,
     pass: process.env.SMTP_PASSWORD!
@@ -40,17 +40,17 @@ const smtp: IEmailConfig = {
   defaultFrom: 'Acme <noreply@example.com>'
 };
 
-// create() é apropriado para serviços/tenants com configurações isoladas.
+// create() is suitable for services/tenants with isolated configurations.
 const mailer = EmailFactory.create(smtp);
 const templateConfig: ITemplateConfig = {
   header: { show: true, logo: { type: 'text', text: 'Acme' } },
   body: {
-    title: 'Bem-vindo!',
-    message: 'Sua conta está pronta.',
-    buttonText: 'Abrir conta',
+    title: 'Welcome!',
+    message: 'Your account is ready.',
+    buttonText: 'Open account',
     buttonUrl: 'https://example.com/account'
   },
-  footer: { show: true, unsubscribeText: 'Cancelar inscrição' }
+  footer: { show: true, unsubscribeText: 'Unsubscribe' }
 };
 
 const template = mailer.getTemplateService().createTemplate(
@@ -61,23 +61,23 @@ const template = mailer.getTemplateService().createTemplate(
 
 const result = await mailer.sendEmail({
   to: 'pessoa@example.com',
-  subject: 'Sua conta está pronta',
+  subject: 'Your account is ready',
   template
 });
 
 if (result.status !== 'success') {
-  // Registre metadados de operação de acordo com a política da aplicação.
-  // Evite enviar corpo da mensagem, credenciais ou dados pessoais aos logs.
-  console.error('Falha no envio', result.status, result.errorStage);
+  // Log operational metadata according to the application's policy.
+  // Avoid sending message bodies, credentials, or personal data to logs.
+  console.error('Email send failed', result.status, result.errorStage);
 }
 
-// No encerramento gracioso do processo/worker:
+// During graceful process/worker shutdown:
 mailer.close();
 ```
 
-## SMTP e throughput
+## SMTP and throughput
 
-`IEmailConfig` expõe as opções principais de SMTP e do pool Nodemailer. `pool`, `maxConnections`, `maxMessages`, `rateDelta` e `rateLimit` controlam o pool e a cadência **de uma instância/processo**:
+`IEmailConfig` exposes the main SMTP and Nodemailer pool options. `pool`, `maxConnections`, `maxMessages`, `rateDelta`, and `rateLimit` control the pool and sending rate **for a single instance/process**:
 
 ```typescript
 const smtp: IEmailConfig = {
@@ -97,18 +97,18 @@ const smtp: IEmailConfig = {
 };
 
 const mailer = EmailFactory.create(smtp);
-await mailer.verifyTransport(); // valida conexão/credenciais; não envia e-mail
+await mailer.verifyTransport(); // validates the connection/credentials; does not send email
 ```
 
-`auth` suporta credenciais `login` (usuário/senha), credenciais `oauth2` (por exemplo `user`, `clientId`, `clientSecret`, `refreshToken` ou `accessToken`) e o mecanismo `custom` do Nodemailer. Armazene tokens, callbacks e segredos em secret manager; o exemplo de senha acima não é requisito para OAuth2.
+`auth` supports `login` credentials (username/password), `oauth2` credentials (for example, `user`, `clientId`, `clientSecret`, `refreshToken`, or `accessToken`), and Nodemailer's `custom` mechanism. Store tokens, callbacks, and secrets in a secret manager; the password example above is not required for OAuth2.
 
-Escolha os limites conforme o provedor SMTP. Multiplicar réplicas multiplica conexões e limites locais; aplique controle distribuído/fila e quotas no sistema que coordena os workers.
+Choose limits according to your SMTP provider. Adding replicas multiplies connections and local limits; apply distributed control/a queue and quotas in the system that coordinates the workers.
 
-`EmailFactory.create(config, templateOptions?, attachmentOptions?)` cria uma instância isolada. `EmailFactory.initialize(...)`/`getInstance()` continuam disponíveis para um singleton por processo; uma segunda inicialização com configurações diferentes lança erro, em vez de reutilizar silenciosamente o primeiro SMTP. Feche cada instância criada com `close()` no shutdown.
+`EmailFactory.create(config, templateOptions?, attachmentOptions?)` creates an isolated instance. `EmailFactory.initialize(...)`/`getInstance()` remain available for a process-wide singleton; a second initialization with different settings throws an error instead of silently reusing the first SMTP configuration. Close each created instance with `close()` during shutdown.
 
-## Fila assíncrona com BullMQ
+## Asynchronous queue with BullMQ
 
-BullMQ é um peer opcional. Instale-o e configure Redis antes de criar a fila. Os processos produtores só precisam adicionar jobs; execute `startWorker()` em workers dedicados e use a mesma `queueName`, `prefix` e conexão Redis. É possível escalar workers horizontalmente. `concurrency` controla jobs simultâneos por worker, enquanto `limiter` aplica uma taxa compartilhada por fila entre os workers BullMQ.
+BullMQ is an optional peer. Install it and configure Redis before creating the queue. Producer processes only need to add jobs; run `startWorker()` in dedicated workers and use the same `queueName`, `prefix`, and Redis connection. Workers can be scaled horizontally. `concurrency` controls simultaneous jobs per worker, while `limiter` applies a shared per-queue rate across BullMQ workers.
 
 ```typescript
 import { EmailFactory, type IEmailConfig } from '@zyther/tzmail';
@@ -123,7 +123,7 @@ const queue = EmailFactory.createBullMQQueue({
   queueName: 'transactional-email',
   concurrency: 10,
   limiter: { max: 100, duration: 1_000 },
-  // Dados por minuto do BullMQ: 14 dias = 14 * 24 * 60 pontos.
+  // BullMQ data points per minute: 14 days = 14 * 24 * 60 points.
   workerMetrics: { maxDataPoints: 20_160 },
   defaultJobOptions: {
     attempts: 5,
@@ -134,19 +134,19 @@ const queue = EmailFactory.createBullMQQueue({
 // Producer/API process:
 const job = await queue.enqueueEmail({
   to: 'ana@example.com',
-  subject: 'Recibo',
-  text: 'Pagamento confirmado.'
+  subject: 'Receipt',
+  text: 'Payment confirmed.'
 }, { idempotencyKey: 'receipt-order-123' });
 console.log('Job ID:', job.id);
 
-// Ou uma leva, enviada ao Redis por addBulk:
+// Or enqueue a batch, sent to Redis via addBulk:
 await queue.enqueueBulk([
-  { email: { to: 'a@example.com', subject: 'Olá', text: 'A' }, job: { idempotencyKey: 'batch-a' } },
-  { email: { to: 'b@example.com', subject: 'Olá', text: 'B' }, job: { idempotencyKey: 'batch-b' } }
+  { email: { to: 'a@example.com', subject: 'Hello', text: 'A' }, job: { idempotencyKey: 'batch-a' } },
+  { email: { to: 'b@example.com', subject: 'Hello', text: 'B' }, job: { idempotencyKey: 'batch-b' } }
 ]);
 ```
 
-Exponha `exportPrometheusMetrics()` em um endpoint interno `/metrics`; ele retorna o formato de texto esperado pelo Prometheus e pode receber labels globais de baixa cardinalidade:
+Expose `exportPrometheusMetrics()` on an internal `/metrics` endpoint; it returns the text format expected by Prometheus and can accept low-cardinality global labels:
 
 ```typescript
 import { createServer } from 'node:http';
@@ -173,42 +173,42 @@ const metricsServer = createServer(async (req, res) => {
 metricsServer.listen(9464, '0.0.0.0');
 ```
 
-Configure o Prometheus para coletar `mail-metrics:9464` a cada 15 segundos. Um exporter dedicado por fila evita séries duplicadas de contagens quando várias réplicas consultam o mesmo Redis. No Grafana, crie painéis para jobs em espera, ativos e falhos e alertas para backlog crescente/falhas. Não use e-mail, ID de job ou outro valor ilimitado como label.
+Configure Prometheus to scrape `mail-metrics:9464` every 15 seconds. A dedicated exporter per queue avoids duplicate count series when multiple replicas query the same Redis instance. In Grafana, create dashboards for waiting, active, and failed jobs, and alerts for growing backlogs/failures. Do not use email addresses, job IDs, or other unbounded values as labels.
 
-Em um processo worker, crie o transporte normal e inicie o consumidor com a mesma configuração da fila:
+In a worker process, create the transport as usual and start the consumer with the same queue configuration:
 
 ```typescript
 const mailer = EmailFactory.createSendGrid({
   apiKey: process.env.SENDGRID_API_KEY!,
   defaultFrom: 'Acme <noreply@example.com>'
 });
-queue.startWorker(mailer, { concurrency: 20 }); // herda workerMetrics da configuração
+queue.startWorker(mailer, { concurrency: 20 }); // inherits workerMetrics from the configuration
 
-// Eventos globais de todos os workers; use-os para logs/alertas em tempo real.
+// Global events from all workers; use them for real-time logging/alerts.
 const events = queue.createQueueEvents();
 events.on('completed', ({ jobId }) => logger.info({ jobId }, 'email job completed'));
 events.on('failed', ({ jobId, failedReason }) => logger.error({ jobId, failedReason }, 'email job failed'));
 
-// No shutdown gracioso, aguarde jobs ativos antes de fechar o transporte:
+// During graceful shutdown, wait for active jobs before closing the transport:
 await queue.close();
 mailer.close();
 ```
 
-`enqueueEmail()` aceita `idempotencyKey` para deduplicar jobs enquanto o job anterior ainda está retido na fila; a chave é transformada em ID Redis sem expor o valor original. Jobs removidos após completar/falhar deixam de deduplicar. `enqueueBulk()` aceita até 1.000 mensagens por padrão; falha parcial durante o bulk pode deixar alguns jobs inseridos, então use chaves idempotentes e confira a fila antes de repetir o lote. `getJobCounts()` retorna contagens de jobs em espera, ativos, concluídos, falhos, atrasados e pausados. `getMetrics('completed' | 'failed')` lê as séries de throughput em intervalos de um minuto armazenadas no Redis; todos os workers da fila devem usar o mesmo `workerMetrics.maxDataPoints`.
+`enqueueEmail()` accepts `idempotencyKey` to deduplicate jobs while the previous job is still retained in the queue; the key is transformed into a Redis ID without exposing the original value. Jobs removed after completion/failure are no longer deduplicated. `enqueueBulk()` accepts up to 1,000 messages by default; a partial failure during bulk insertion may leave some jobs enqueued, so use idempotency keys and check the queue before retrying the batch. `getJobCounts()` returns counts of waiting, active, completed, failed, delayed, and paused jobs. `getMetrics('completed' | 'failed')` reads throughput series in one-minute intervals stored in Redis; all workers in the queue must use the same `workerMetrics.maxDataPoints`.
 
-As opções padrão são 5 tentativas, backoff exponencial com jitter, retenção de jobs concluídos por até 24 horas/10.000 itens e jobs falhos por até 7 dias/50.000 itens. Podem ser alteradas em `defaultJobOptions` ou por job. BullMQ reprocessa falhas de worker; uma falha de transporte após a aceitação remota mas antes da resposta pode, portanto, duplicar o envio. Idempotência do job evita enqueue duplicado enquanto ele está retido, mas não fornece entrega exactly-once no provedor. Erros de validação/renderização e entregas parciais são marcados como não recuperáveis. Em entrega parcial não há retry automático, para evitar reenviar a quem já foi aceite; revise esses jobs falhos e trate os destinatários rejeitados por um fluxo específico.
+The default options are 5 attempts, exponential backoff with jitter, retention of completed jobs for up to 24 hours/10,000 items, and failed jobs for up to 7 days/50,000 items. These can be changed in `defaultJobOptions` or per job. BullMQ retries worker failures; a transport failure after remote acceptance but before the response can therefore duplicate a send. Job idempotency prevents duplicate enqueueing while a job is retained, but does not provide exactly-once delivery by the provider. Validation/rendering errors and partial deliveries are marked as unrecoverable. Partial deliveries are not retried automatically, to avoid resending to recipients who have already been accepted; review these failed jobs and handle rejected recipients through a dedicated flow.
 
-O template é renderizado antes de entrar na fila, para não serializar closures/funções. Conteúdo de `Buffer` é convertido em Base64 e armazenado no Redis. `path` de anexo permanece um caminho local, que precisa estar acessível em todos os workers. O tamanho máximo serializado é 10 MiB por job por padrão (`maxPayloadBytes`); aumente com cautela, pois anexos grandes ocupam Redis e memória. O payload contém endereços e conteúdo de e-mail: proteja Redis com TLS, autenticação, controles de rede e retenção adequada. `close()` aguarda os workers ativos e fecha a fila; chame-o no encerramento gracioso.
+The template is rendered before entering the queue, to avoid serializing closures/functions. `Buffer` content is converted to Base64 and stored in Redis. Attachment `path` remains a local path that must be accessible to all workers. The default maximum serialized size is 10 MiB per job (`maxPayloadBytes`); increase it cautiously, since large attachments consume Redis and memory. The payload contains email addresses and content: protect Redis with TLS, authentication, network controls, and appropriate retention. `close()` waits for active workers and closes the queue; call it during graceful shutdown.
 
-Veja também a documentação oficial BullMQ sobre [retries e backoff](https://docs.bullmq.io/guide/retrying-failing-jobs), [IDs de job](https://docs.bullmq.io/guide/jobs/job-ids), [inserção em lote](https://docs.bullmq.io/guide/queues/adding-bulks), [rate limiting](https://docs.bullmq.io/guide/rate-limiting) e [shutdown de workers](https://docs.bullmq.io/guide/workers/graceful-shutdown).
+See also the official BullMQ documentation on [retries and backoff](https://docs.bullmq.io/guide/retrying-failing-jobs), [job IDs](https://docs.bullmq.io/guide/jobs/job-ids), [bulk insertion](https://docs.bullmq.io/guide/queues/adding-bulks), [rate limiting](https://docs.bullmq.io/guide/rate-limiting), and [graceful worker shutdown](https://docs.bullmq.io/guide/workers/graceful-shutdown).
 
-## Provedores de e-mail
+## Email providers
 
-As factories de provedores criam instâncias independentes, então é possível manter, por exemplo, uma saída transacional no SES e outra de marketing no SendGrid no mesmo processo. Não há estado singleton compartilhado entre chaves ou tenants.
+Provider factories create independent instances, so you can, for example, maintain a transactional sender through SES and a marketing sender through SendGrid in the same process. There is no shared singleton state across keys or tenants.
 
 ### SendGrid Web API
 
-O adapter usa a API v3 oficial por `fetch` (não requer `@sendgrid/mail`). O remetente precisa estar verificado no SendGrid. Anexos da API são codificados em Base64 e ficam em memória durante a chamada; configure `maxAttachmentBytes` para limitar o tamanho de cada arquivo.
+The adapter uses the official v3 API via `fetch` (it does not require `@sendgrid/mail`). The sender must be verified in SendGrid. API attachments are Base64-encoded and held in memory during the call; configure `maxAttachmentBytes` to limit the size of each file.
 
 ```typescript
 const sendgrid = EmailFactory.createSendGrid({
@@ -220,23 +220,23 @@ const sendgrid = EmailFactory.createSendGrid({
 
 const result = await sendgrid.sendEmail({
   to: ['ana@example.com', 'bruno@example.com'],
-  subject: 'Atualização da conta',
-  text: 'Sua conta foi atualizada.'
+  subject: 'Account update',
+  text: 'Your account has been updated.'
 });
 sendgrid.close();
 ```
 
-Use `apiUrl` se a conta estiver configurada para um endpoint regional. O padrão é `https://api.sendgrid.com`. Referências: [Mail Send API](https://www.twilio.com/docs/sendgrid/api-reference/mail-send/mail-send) e [anexos no SDK oficial](https://github.com/sendgrid/sendgrid-nodejs/blob/main/docs/use-cases/attachments.md).
+Use `apiUrl` if the account is configured for a regional endpoint. The default is `https://api.sendgrid.com`. References: [Mail Send API](https://www.twilio.com/docs/sendgrid/api-reference/mail-send/mail-send) and [attachments in the official SDK](https://github.com/sendgrid/sendgrid-nodejs/blob/main/docs/use-cases/attachments.md).
 
 ### Mailgun Messages API
 
-O adapter usa a API Messages via `fetch` e multipart/form-data; não exige `mailgun.js`. Defina o domínio de envio e a região da conta. `apiUrl` só deve ser personalizado para endpoint próprio ou controlado.
+The adapter uses the Messages API via `fetch` and multipart/form-data; it does not require `mailgun.js`. Set the sending domain and account region. `apiUrl` should only be customized for a custom or controlled endpoint.
 
 ```typescript
 const mailgun = EmailFactory.createMailgun({
   apiKey: process.env.MAILGUN_API_KEY!,
   domain: process.env.MAILGUN_DOMAIN!,
-  region: 'eu', // omita ou use 'us' para a API dos EUA
+  region: 'eu', // omit or use 'us' for the US API
   defaultFrom: 'Acme <noreply@example.com>',
   requestTimeoutMs: 30_000,
   maxAttachmentBytes: 10 * 1024 * 1024
@@ -244,17 +244,17 @@ const mailgun = EmailFactory.createMailgun({
 
 await mailgun.sendEmail({
   to: 'ana@example.com',
-  subject: 'Olá',
-  html: '<p>Mensagem enviada pelo Mailgun.</p>'
+  subject: 'Hello',
+  html: '<p>Message sent via Mailgun.</p>'
 });
 mailgun.close();
 ```
 
-O adapter usa `https://api.mailgun.net` nos EUA e `https://api.eu.mailgun.net` para `region: 'eu'`. Os anexos são preparados em memória antes do POST; defina limite adequado. Para imagens inline, Mailgun deriva o Content-ID do nome do arquivo; quando `cid` é informado, o adapter converte referências `cid:<valor>` do HTML para `cid:<filename>`. Veja a [API oficial de mensagens](https://documentation.mailgun.com/docs/mailgun/api-reference/send/mailgun/messages).
+The adapter uses `https://api.mailgun.net` in the US and `https://api.eu.mailgun.net` for `region: 'eu'`. Attachments are prepared in memory before the POST; set an appropriate limit. For inline images, Mailgun derives the Content-ID from the file name; when `cid` is provided, the adapter converts `cid:<value>` references in the HTML to `cid:<filename>`. See the [official Messages API](https://documentation.mailgun.com/docs/mailgun/api-reference/send/mailgun/messages).
 
 ### Amazon SES v2
 
-Instale o SDK oficial apenas se for usar SES:
+Install the official SDK only if you are going to use SES:
 
 ```bash
 npm install @aws-sdk/client-sesv2
@@ -264,29 +264,29 @@ npm install @aws-sdk/client-sesv2
 const ses = EmailFactory.createSES({
   region: process.env.AWS_REGION ?? 'us-east-1',
   defaultFrom: 'Acme <noreply@example.com>'
-  // Sem credentials explícitas, o AWS SDK usa a cadeia padrão de credenciais,
-  // como IAM role, variáveis de ambiente ou credenciais locais.
+  // Without explicit credentials, the AWS SDK uses the default credential chain,
+  // such as an IAM role, environment variables, or local credentials.
 });
 
 await ses.sendEmail({
   to: 'ana@example.com',
-  subject: 'Recibo',
-  text: 'Pagamento confirmado.'
+  subject: 'Receipt',
+  text: 'Payment confirmed.'
 });
 ses.close();
 ```
 
-O adapter usa o transporte SESv2 do Nodemailer. A identidade remetente precisa estar verificada e a role/credencial precisa da permissão `ses:SendEmail`. O transporte SES não aplica limites de taxa por si só; use a fila BullMQ ou coordenação própria para respeitar a quota da conta. O Nodemailer documenta que o transporte SES monta a mensagem completa em memória, inclusive anexos. Consulte [SES transport](https://nodemailer.com/transports/ses) e [credenciais do AWS SDK](https://docs.aws.amazon.com/sdk-for-javascript/v3/developer-guide/ses-examples-sending-email.html).
+The adapter uses Nodemailer's SESv2 transport. The sender identity must be verified and the role/credential must have the `ses:SendEmail` permission. The SES transport does not enforce rate limits on its own; use the BullMQ queue or your own coordination to respect the account quota. Nodemailer documents that the SES transport builds the full message in memory, including attachments. See [SES transport](https://nodemailer.com/transports/ses) and [AWS SDK credentials](https://docs.aws.amazon.com/sdk-for-javascript/v3/developer-guide/ses-examples-sending-email.html).
 
-### Transportes customizados e verificação
+### Custom transports and verification
 
-`EmailFactory.createWithTransport(transport, defaultFrom?, templateOptions?, attachmentOptions?)` permite conectar um adapter próprio que implemente `IEmailTransport`. `verifyTransport()` funciona quando o transporte oferece um check não destrutivo; SendGrid e Mailgun não enviam requisições de teste porque a API de envio não fornece um health check seguro com permissões mínimas. Para esses provedores, valide a chave e as permissões em ambiente de implantação e monitore as respostas reais de envio.
+`EmailFactory.createWithTransport(transport, defaultFrom?, templateOptions?, attachmentOptions?)` lets you connect a custom adapter that implements `IEmailTransport`. `verifyTransport()` works when the transport offers a non-destructive check; SendGrid and Mailgun do not send test requests because the sending API does not provide a safe health check with minimal permissions. For these providers, validate the key and permissions in the deployment environment and monitor actual send responses.
 
-Todas as factories aceitam as mesmas opções opcionais de template e anexos. `requestTimeoutMs` padrão das APIs SendGrid e Mailgun é 30 segundos. `maxAttachmentBytes` é opcional e limita cada anexo individual; arquivos SendGrid/Mailgun e mensagens SES podem ser bufferizados em memória. Para arquivos grandes, use limites conservadores e transporte SMTP quando apropriado.
+All factories accept the same optional template and attachment options. The default `requestTimeoutMs` for the SendGrid and Mailgun APIs is 30 seconds. `maxAttachmentBytes` is optional and limits each individual attachment; SendGrid/Mailgun files and SES messages may be buffered in memory. For large files, use conservative limits and SMTP transport when appropriate.
 
-## Templates e temas
+## Templates and themes
 
-Temas disponíveis: `ThemeType.MODERN`, `CORPORATE`, `MINIMAL`, `MONOKAI` e `SYSTEM`, cada um com variante `light` ou `dark`.
+Available themes: `ThemeType.MODERN`, `CORPORATE`, `MINIMAL`, `MONOKAI`, and `SYSTEM`, each with a `light` or `dark` variant.
 
 ```typescript
 const service = mailer.getTemplateService();
@@ -296,11 +296,11 @@ const html = await service.previewTemplate(
   'light',
   {
     header: { show: true, logo: { type: 'text', text: 'Acme' } },
-    body: { title: 'Olá, Ana', message: 'Veja as novidades.' },
+    body: { title: 'Hello, Ana', message: 'See what is new.' },
     footer: {
       show: true,
-      links: [{ text: 'Privacidade', url: 'https://example.com/privacy' }],
-      unsubscribeText: 'Cancelar inscrição',
+      links: [{ text: 'Privacy', url: 'https://example.com/privacy' }],
+      unsubscribeText: 'Unsubscribe',
       unsubscribeUrl: 'https://example.com/unsubscribe?token=...'
     }
   },
@@ -308,16 +308,16 @@ const html = await service.previewTemplate(
 );
 ```
 
-As opções `ITemplateServiceOptions` incluem:
+`ITemplateServiceOptions` options include:
 
-| Opção | Padrão | Descrição |
+| Option | Default | Description |
 | --- | ---: | --- |
-| `cache` | `true` | Cache em memória por configuração. Pode ser desativado por chamada com `{ cache: false }`. |
-| `cacheTTL` | `3600` | TTL em segundos; `0` desativa o armazenamento. |
-| `maxCacheEntries` | `100` | Limite positivo de entradas em cache; remoção aproximada LRU. |
-| `maxHistoryEntries` | `100` | Limite de IDs no histórico. |
-| `maxVersionsPerTemplate` | `10` | Versões mantidas por template. |
-| `validateConfig` | `true` | Valida opções do template antes de renderizar. |
+| `cache` | `true` | In-memory cache by configuration. Can be disabled per call with `{ cache: false }`. |
+| `cacheTTL` | `3600` | TTL in seconds; `0` disables storage. |
+| `maxCacheEntries` | `100` | Positive limit on cached entries; approximate LRU eviction. |
+| `maxHistoryEntries` | `100` | Limit on IDs in the history. |
+| `maxVersionsPerTemplate` | `10` | Versions retained per template. |
+| `validateConfig` | `true` | Validates template options before rendering. |
 
 ```typescript
 import { TemplateService } from '@zyther/tzmail';
@@ -330,24 +330,24 @@ const service = new TemplateService({
 });
 ```
 
-O cache e o histórico são locais ao processo, não distribuídos. Chame `service.dispose()` quando criar `TemplateService` diretamente e não precisar mais dele. `EmailFactory.close()` encerra o timer do serviço associado.
-`getTemplateStats()` retorna `totalTemplates`, `cachedTemplates`, `totalHits`, `cacheRequests`, `cacheHitRate` e contagem por tema; solicitações que bypassam/desativam o cache não entram na taxa de acerto.
+The cache and history are local to the process, not distributed. Call `service.dispose()` when you create `TemplateService` directly and no longer need it. `EmailFactory.close()` stops the associated service timer.
+`getTemplateStats()` returns `totalTemplates`, `cachedTemplates`, `totalHits`, `cacheRequests`, `cacheHitRate`, and counts by theme; requests that bypass/disable the cache are not included in the hit rate.
 
-### Política de HTML e URLs
+### HTML and URL policy
 
-- `title`, `message`, nome do logo, textos de botões/links/rodapé e metadados textuais são escapados pelo renderer.
-- `body.content` é o único campo de configuração tratado como **HTML confiável** para permitir markup personalizado. Não passe HTML fornecido por usuários sem sanitizá-lo com uma política apropriada à aplicação.
-- `TemplateBuilder.buildBody()` é uma API de baixo nível e também espera HTML confiável; prefira `TemplateService` para receber validação e interpolação.
-- `IEmailOptions.html` também é encaminhado como HTML fornecido pelo chamador; trate-o como conteúdo confiável ou sanitize antes do envio.
-- URLs de ações e links aceitam URLs absolutas `https:`, `http:` ou `mailto:`; imagens/logos e links sociais aceitam `https:`/`http:`. Esquemas como `javascript:` e `data:` e atributos com caracteres de injeção são recusados.
-- Cores e alguns valores de estilo são validados. A validação da biblioteca não substitui validação de negócio nem sanitização de HTML customizado.
+- `title`, `message`, logo name, button/link/footer text, and textual metadata are escaped by the renderer.
+- `body.content` is the only configuration field treated as **trusted HTML** to allow custom markup. Do not pass user-provided HTML without sanitizing it with a policy appropriate to the application.
+- `TemplateBuilder.buildBody()` is a low-level API and also expects trusted HTML; prefer `TemplateService` for validation and interpolation.
+- `IEmailOptions.html` is also passed through as HTML supplied by the caller; treat it as trusted content or sanitize it before sending.
+- Action and link URLs accept absolute `https:`, `http:`, or `mailto:` URLs; images/logos and social links accept `https:`/`http:`. Schemes such as `javascript:` and `data:` and attributes containing injection characters are rejected.
+- Colors and some style values are validated. The library's validation does not replace business validation or sanitization of custom HTML.
 
-Para personalização por destinatário, use `{{placeholder}}` em textos do template e passe `templateData` na mensagem. Há suporte a chaves aninhadas (`{{user.firstName}}`); os valores folha devem ser primitivos (`string`, `number`, `boolean` ou `null`) e placeholder sem valor faz o render falhar em vez de enviar texto incompleto. Valores inseridos em texto são escapados; inserções em `body.content` são escapadas antes de entrar no HTML confiável; URLs são validadas depois da interpolação.
+For per-recipient customization, use `{{placeholder}}` in template text and pass `templateData` in the message. Nested keys are supported (`{{user.firstName}}`); leaf values must be primitives (`string`, `number`, `boolean`, or `null`), and a placeholder without a value causes rendering to fail instead of sending incomplete text. Values inserted into text are escaped; insertions into `body.content` are escaped before being added to the trusted HTML; URLs are validated after interpolation.
 
 ```typescript
 await mailer.sendEmail({
   to: 'ana@example.com',
-  subject: 'Bem-vinda',
+  subject: 'Welcome',
   template,
   templateData: {
     user: { firstName: 'Ana' },
@@ -357,11 +357,11 @@ await mailer.sendEmail({
 });
 ```
 
-Use, por exemplo, `title: 'Olá, {{user.firstName}}'` e `buttonUrl: '{{actionUrl}}'` na configuração do template. A URL dinâmica ainda precisa obedecer aos esquemas permitidos.
+For example, use `title: 'Hello, {{user.firstName}}'` and `buttonUrl: '{{actionUrl}}'` in the template configuration. The dynamic URL must still comply with the allowed schemes.
 
-## Anexos
+## Attachments
 
-Anexos por caminho permanecem como paths para que o Nodemailer possa transmiti-los sem carregar arquivos grandes inteiros na memória. Em produção, prefira restringir a raiz permitida e impor limite de tamanho:
+Attachments specified by path remain as paths so Nodemailer can stream them without loading entire large files into memory. In production, prefer restricting the allowed root and enforcing a size limit:
 
 ```typescript
 const mailer = EmailFactory.create(
@@ -375,17 +375,17 @@ const attachment = await mailer.getAttachmentService().addFromPath(
 );
 await mailer.sendEmail({
   to: 'finance@example.com',
-  subject: 'Relatório',
-  text: 'Segue o relatório.',
+  subject: 'Report',
+  text: 'Please find the report attached.',
   attachments: [attachment]
 });
 ```
 
-`allowedRoot` resolve caminhos reais e rejeita escapes da raiz, inclusive por symlink no momento da validação. Mantenha a raiz e seus diretórios não graváveis por usuários não confiáveis para reduzir risco de troca do arquivo entre validação e leitura. Se não for definido, cabe à aplicação garantir que os caminhos são confiáveis. `maxSizeBytes` é opcional; anexos por buffer também são verificados. `addFromUrl()` não baixa URLs e permanece não implementado.
+`allowedRoot` resolves real paths and rejects paths outside the root, including symlink escapes at validation time. Keep the root and its directories unwritable by untrusted users to reduce the risk of the file being swapped between validation and reading. If it is not set, the application is responsible for ensuring that paths are trusted. `maxSizeBytes` is optional; buffer attachments are also checked. `addFromUrl()` does not download URLs and remains unimplemented.
 
-## Resultado e tratamento de falhas
+## Results and error handling
 
-`sendEmail()` retorna sempre um `IEmailSendResult`; validação, renderização e transporte são identificados por `errorStage`:
+`sendEmail()` always returns an `IEmailSendResult`; validation, rendering, and transport are identified by `errorStage`:
 
 ```typescript
 type IEmailSendResult = {
@@ -400,9 +400,9 @@ type IEmailSendResult = {
 };
 ```
 
-`success` só é `true` quando o transporte não reporta destinatários rejeitados. `partial` significa aceitação e rejeição parciais; encaminhe esses casos para tratamento/retry explícito na aplicação. Uma API ou servidor aceitar a mensagem não prova entrega final, leitura ou ausência de spam.
+`success` is `true` only when the transport reports no rejected recipients. `partial` means partial acceptance and rejection; route these cases to explicit handling/retry in the application. An API or server accepting the message does not prove final delivery, that it was read, or that it avoided spam.
 
-## Desenvolvimento e validação
+## Development and validation
 
 ```bash
 npm ci
@@ -412,16 +412,16 @@ npm test
 npm pack --dry-run
 ```
 
-Os testes usam o runner nativo `node:test` e transporters falsos; não enviam e-mails reais. A pipeline do GitHub Actions executa lint, typecheck, build/testes e inspeção do pacote em pushes, pull requests e antes de publicar um release no npm.
+Tests use the native `node:test` runner and fake transports; they do not send real emails. The GitHub Actions pipeline runs lint, typecheck, build/tests, and package inspection on pushes, pull requests, and before publishing an npm release.
 
-## Considerações para produção
+## Production considerations
 
-1. Use `BullMQEmailQueue` ou outra fila/outbox durável com workers, idempotência e retries com backoff; não repita automaticamente envios sem estratégia contra duplicatas.
-2. Configure SPF, DKIM, DMARC, reputação/domínio de envio, quotas e tratamento de bounces/unsubscribe no provedor e na aplicação.
-3. Guarde segredos fora do repositório e aplique rotação; não registre conteúdo de mensagem nem tokens de links.
-4. Dimensione `maxConnections`/`rateLimit` com o provedor e com o número de réplicas. Os limites do Nodemailer pool são locais; o limiter BullMQ é compartilhado pela fila.
-5. Monitore `status`, `errorStage`, `accepted`/`rejected`, latência e filas com logs redigidos e métricas próprias.
+1. Use `BullMQEmailQueue` or another durable queue/outbox with workers, idempotency, and retries with backoff; do not automatically retry sends without a duplicate-prevention strategy.
+2. Configure SPF, DKIM, DMARC, sending domain/reputation, quotas, and bounce/unsubscribe handling with the provider and in the application.
+3. Keep secrets out of the repository and rotate them; do not log message content or link tokens.
+4. Size `maxConnections`/`rateLimit` according to the provider and the number of replicas. Nodemailer pool limits are local; the BullMQ limiter is shared by the queue.
+5. Monitor `status`, `errorStage`, `accepted`/`rejected`, latency, and queues with redacted logs and custom metrics.
 
-## Licença
+## License
 
-ISC. Consulte `LICENSE`/metadados do repositório para os termos aplicáveis.
+ISC. See `LICENSE`/repository metadata for the applicable terms.
