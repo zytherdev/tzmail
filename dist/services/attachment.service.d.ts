@@ -1,46 +1,24 @@
 import { IAttachment } from '../core/interfaces/email.interface';
+export interface IAttachmentServiceOptions {
+    /** Restrict path attachments to this directory, resolved through realpath. */
+    allowedRoot?: string;
+    /** Optional maximum byte size for path- and buffer-backed attachments. */
+    maxSizeBytes?: number;
+}
 /**
- * AttachmentService - Gerencia anexos para emails
- *
- * Métodos:
- * - addFromPath(filePath: string, options?: Partial<IAttachment>): Promise<IAttachment>
- *   Adiciona um anexo a partir de um caminho de arquivo.
- *
- * - addFromBuffer(buffer: Buffer, filename: string, options?: Partial<IAttachment>): Promise<IAttachment>
- *   Adiciona um anexo a partir de um buffer em memória.
- *
- * - addFromUrl(url: string, filename: string): Promise<IAttachment>
- *   Adiciona um anexo a partir de uma URL (ainda não implementado).
- *
- * Exemplo de uso:
- *
- * const attachmentService = new AttachmentService();
- * const attachment = await attachmentService.addFromPath('path/to/file.pdf');
- *
- * emailFactory.sendEmail({
- *   to: 'user@example.com',
- *   subject: 'Assunto do Email',
- *   template: myTemplate,
- *   attachments: [{...attachment}]
- * });
+ * Creates Nodemailer attachment descriptors. Path attachments remain paths so
+ * Nodemailer can stream large files instead of loading them into memory.
+ * If allowedRoot is omitted, callers are responsible for supplying trusted paths.
  */
 export declare class AttachmentService {
-    /**
-     * addFromPath - Adiciona um anexo a partir de um caminho de arquivo
-     * @param filePath - Caminho do arquivo a ser anexado
-     * @param options - Opções adicionais para o anexo (filename, contentType, cid)
-     * @returns Promise<IAttachment> - Objeto de anexo formatado para Nodemailer
-     * @throws Error se o caminho não for um arquivo válido
-     */
+    private readonly options;
+    private readonly maxSizeBytes?;
+    constructor(options?: IAttachmentServiceOptions);
+    /** Add an attachment as a file path, preserving streaming behavior. */
     addFromPath(filePath: string, options?: Partial<IAttachment>): Promise<IAttachment>;
     addFromBuffer(buffer: Buffer, filename: string, options?: Partial<IAttachment>): Promise<IAttachment>;
-    /**
-     * addFromUrl - Adiciona um anexo a partir de uma URL (a ser implementado)
-     * @param url - URL do recurso a ser anexado
-     * @param filename - Nome do arquivo para o anexo
-     * @returns Promise<IAttachment> - Objeto de anexo formatado para Nodemailer
-     * @throws Error se o método não for implementado
-     */
+    /** URL attachments are deliberately not fetched by this service. */
     addFromUrl(url: string, filename: string): Promise<IAttachment>;
+    private assertSize;
 }
 //# sourceMappingURL=attachment.service.d.ts.map

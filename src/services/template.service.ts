@@ -1,8 +1,7 @@
-
+import { createHash } from 'node:crypto';
 import { ITemplate, ITemplateConfig } from '../core/interfaces/template.interface';
 import { TemplateFactory } from '../factories/template-factory';
 import { ThemeType } from '../core/enums/theme.enum';
-import { ITheme } from '../templates/themes/theme.interface';
 
 interface TemplateCache {
   template: ITemplate;
@@ -11,631 +10,414 @@ interface TemplateCache {
   hits: number;
 }
 
-interface TemplateOptions {
+export interface ITemplateServiceOptions {
+  /** Cache ligado por padrão; pode ser desligado por chamada. */
   cache?: boolean;
-  cacheTTL?: number; 
+  /** TTL em segundos. Zero desabilita o cache para aquela criação; valores negativos/não finitos são inválidos. */
+  cacheTTL?: number;
   validateConfig?: boolean;
+  /** Mantido por compatibilidade. A transformação destrutiva foi desativada. */
   minify?: boolean;
   preview?: boolean;
+  /** Limite de templates em cache; padrão finito de 100. */
+  maxCacheEntries?: number;
+  /** Limite de IDs de template guardados no histórico; padrão finito de 100. */
+  maxHistoryEntries?: number;
+  /** Máximo de versões por ID de template; padrão 10. */
+  maxVersionsPerTemplate?: number;
+}
+
+type TemplateOptions = ITemplateServiceOptions;
+
+const VALID_THEMES = Object.values(ThemeType);
+const SAFE_COLOR = /^(#[\da-f]{3,8}|[a-z]{1,24}|(?:rgb|rgba|hsl|hsla)\([\d.%\s,+/-]+\))$/i;
+const SAFE_COLOR_NAMES = new Set(('transparent inherit currentcolor aliceblue antiquewhite aqua aquamarine azure beige bisque black blanchedalmond blue blueviolet brown burlywood cadetblue chartreuse chocolate coral cornflowerblue cornsilk crimson cyan darkblue darkcyan darkgoldenrod darkgray darkgrey darkgreen darkkhaki darkmagenta darkolivegreen darkorange darkorchid darkred darksalmon darkseagreen darkslateblue darkslategray darkslategrey darkturquoise darkviolet deeppink deepskyblue dimgray dimgrey dodgerblue firebrick floralwhite forestgreen fuchsia gainsboro ghostwhite gold goldenrod gray grey green greenyellow honeydew hotpink indianred indigo ivory khaki lavender lavenderblush lawngreen lemonchiffon lightblue lightcoral lightcyan lightgoldenrodyellow lightgray lightgrey lightgreen lightpink lightsalmon lightseagreen lightskyblue lightslategray lightslategrey lightsteelblue lightyellow lime limegreen linen magenta maroon mediumaquamarine mediumblue mediumorchid mediumpurple mediumseagreen mediumslateblue mediumspringgreen mediumturquoise mediumvioletred midnightblue mintcream mistyrose moccasin navajowhite navy oldlace olive olivedrab orange orangered orchid palegoldenrod palegreen paleturquoise palevioletred papayawhip peachpuff peru pink plum powderblue purple rebeccapurple red rosybrown royalblue saddlebrown salmon sandybrown seagreen seashell sienna silver skyblue slateblue slategray slategrey snow springgreen steelblue tan teal thistle tomato turquoise violet wheat white whitesmoke yellow yellowgreen').split(' '));
+const SOCIAL_PLATFORMS = new Set([
+  'facebook', 'twitter', 'linkedin', 'github', 'instagram', 'youtube', 'tiktok', 'pinterest', 'reddit',
+  'gitlab', 'stackoverflow', 'medium', 'dribbble', 'behance', 'telegram'
+]);
+
+function cloneConfig<T>(value: T): T {
+  if (value === undefined || value === null) return value;
+  return JSON.parse(JSON.stringify(value)) as T;
+}
+
+function canonicalize(value: any): any {
+  if (Array.isArray(value)) return value.map(canonicalize);
+  if (value && typeof value === 'object') {
+    return Object.keys(value).sort().reduce((result, key) => {
+      result[key] = canonicalize(value[key]);
+      return result;
+    }, {} as Record<string, any>);
+  }
+  return value;
+}
+
+function isSafeColor(value: unknown): boolean {
+  if (typeof value !== 'string' || !SAFE_COLOR.test(value.trim())) return false;
+  const normalized = value.trim().toLowerCase();
+  return normalized.startsWith('#') || normalized.startsWith('rgb') || normalized.startsWith('hsl') || SAFE_COLOR_NAMES.has(normalized);
+}
+
+function hasTemplatePlaceholder(value: unknown): boolean {
+  return typeof value === 'string' && /\{\{\s*[A-Za-z0-9_.-]+\s*\}\}/.test(value);
+}
+
+function assertSafeUrl(value: unknown, allowMailto: boolean, field: string): void {
+  if (typeof value !== 'string' || !value.trim() || /[\u0000-\u0020"'<>\\]/.test(value)) {
+    throw new Error(`${field} must be a valid URL`);
+  }
+  let parsed: URL;
+  try { parsed = new URL(value); } catch { throw new Error(`${field} must be an absolute URL`); }
+  const allowed = allowMailto ? ['http:', 'https:', 'mailto:'] : ['http:', 'https:'];
+  if (!allowed.includes(parsed.protocol.toLowerCase())) throw new Error(`${field} uses an unsafe URL scheme`);
 }
 
 /**
- * TemplateService - Gerencia a criação, renderização e gerenciamento de templates de email
- * 
- * Métodos:
- * - createTemplate(themeType, variant, config, options): ITemplate
- *   Cria um novo template com as configurações especificadas.
- * 
- * - cloneTemplate(template, modifications): ITemplate
- *   Cria um template a partir de um template existente (clone).
- * 
- * - renderTemplate(template, data, options): Promise<string>
- *   Renderiza um template com os dados fornecidos.
- * 
- * - previewTemplate(themeType, variant, config, data): Promise<string>
- *   Pré-visualiza um template sem enviar email.
- * 
- * - getThemeInfo(themeType): object
- *   Obtém informações sobre um tema específico.
- * 
- * - listThemes(): ThemeType[]
- *   Lista todos os temas disponíveis.
- * 
- * - getTemplateStats(): object
- *   Obtém estatísticas de uso dos templates.
- * 
- * - clearCache(themeType?): number
- *   Limpa o cache de templates, opcionalmente por tema.
- * 
- * - getTemplateHistory(templateId): ITemplate[]
- *   Obtém histórico de versões de um template.
- * 
- * - restoreTemplateVersion(templateId, versionIndex): ITemplate | null
- *   Restaura uma versão anterior do template.
- * 
- * Exemplo de uso:
- * 
- * const templateService = new TemplateService();
- * const myTemplate = templateService.createTemplate(ThemeType.MODERN, 'light', { header: { show: true } });
- * const html = await templateService.renderTemplate(myTemplate, { username: 'John' });
- * console.log(html);
+ * TemplateService - criação, renderização e gestão de templates de email.
+ * Cache e histórico mantêm limites finitos e retornam snapshots defensivos.
  */
 export class TemplateService {
-  private templateCache: Map<string, TemplateCache> = new Map();
-  private defaultTTL: number = 3600; 
-  private templateHistory: Map<string, ITemplate[]> = new Map();
-  
-  constructor(private options: TemplateOptions = {}) {
+  private templateCache = new Map<string, TemplateCache>();
+  private templateHistory = new Map<string, ITemplate[]>();
+  private cacheRequests = 0;
+  private cacheHits = 0;
+  private readonly options: Required<TemplateOptions>;
+  private cleanupTimer: ReturnType<typeof setInterval>;
+
+  constructor(options: TemplateOptions = {}) {
     this.options = {
       cache: true,
       cacheTTL: 3600,
       validateConfig: true,
-      minify: true,
+      minify: false,
       preview: false,
+      maxCacheEntries: 100,
+      maxHistoryEntries: 100,
+      maxVersionsPerTemplate: 10,
       ...options
     };
-    
-    setInterval(() => this.cleanExpiredCache(), 3600000);
+    this.validateLimit(this.options.maxCacheEntries, 'maxCacheEntries');
+    this.validateLimit(this.options.maxHistoryEntries, 'maxHistoryEntries');
+    this.validateLimit(this.options.maxVersionsPerTemplate, 'maxVersionsPerTemplate');
+    this.cleanupTimer = setInterval(() => this.cleanExpiredCache(), 3600000);
+    this.cleanupTimer.unref?.();
   }
-  
-  /**
-   * Cria um novo template com as configurações especificadas
-   */
-  createTemplate(
-    themeType: ThemeType,
-    variant: 'light' | 'dark',
-    config: ITemplateConfig,
-    options?: TemplateOptions
-  ): ITemplate {
-    // Validar configuração se necessário
-    if (this.options.validateConfig || options?.validateConfig) {
-      this.validateTemplateConfig(config);
-    }
-    
-    // Gerar ID único para o template
+
+  createTemplate(themeType: ThemeType, variant: 'light' | 'dark', config: ITemplateConfig, options?: TemplateOptions): ITemplate {
+    this.assertThemeAndVariant(themeType, variant);
+    if (!config || typeof config !== 'object' || Array.isArray(config)) throw new Error('Template config must be an object');
+    if (options?.validateConfig ?? this.options.validateConfig) this.validateTemplateConfig(config);
+
     const templateId = this.generateTemplateId(themeType, variant, config);
-    
-    // ckeck cache
-    if ((this.options.cache || options?.cache) && this.templateCache.has(templateId)) {
-      const cached = this.templateCache.get(templateId)!;
-      cached.hits++;
-      return cached.template;
+    const cacheEnabled = options?.cache ?? this.options.cache;
+    const ttlSeconds = options?.cacheTTL ?? this.options.cacheTTL;
+    if (!Number.isFinite(ttlSeconds) || ttlSeconds < 0) throw new Error('cacheTTL must be a finite non-negative number');
+    if (options?.maxCacheEntries !== undefined) this.validateLimit(options.maxCacheEntries, 'maxCacheEntries');
+    if (options?.maxHistoryEntries !== undefined) this.validateLimit(options.maxHistoryEntries, 'maxHistoryEntries');
+    if (options?.maxVersionsPerTemplate !== undefined) this.validateLimit(options.maxVersionsPerTemplate, 'maxVersionsPerTemplate');
+    const useCache = cacheEnabled && ttlSeconds > 0;
+
+    if (useCache) {
+      this.cacheRequests++;
+      const cached = this.templateCache.get(templateId);
+      if (cached && cached.expiresAt.getTime() > Date.now()) {
+        cached.hits++;
+        this.cacheHits++;
+        // Atualiza ordem para limitar o mapa por LRU aproximado.
+        this.templateCache.delete(templateId);
+        this.templateCache.set(templateId, cached);
+        return this.copyTemplate(cached.template);
+      }
+      if (cached) this.templateCache.delete(templateId);
     }
-    
-    // Criar template
-    const template = TemplateFactory.createTemplate(themeType, variant, config);
-    
-    // add métodos adicionais ao template
-    const enhancedTemplate = this.enhanceTemplate(template, templateId);
-    
-    // store em cache
-    if (this.options.cache || options?.cache) {
-      const ttl = (options?.cacheTTL || this.options.cacheTTL || this.defaultTTL) * 1000;
+
+    const safeConfig = cloneConfig(config);
+    const template = TemplateFactory.createTemplate(themeType, variant, safeConfig);
+    const enhanced = this.enhanceTemplate(template, templateId);
+
+    if (useCache) {
       this.templateCache.set(templateId, {
-        template: enhancedTemplate,
+        template: enhanced,
         createdAt: new Date(),
-        expiresAt: new Date(Date.now() + ttl),
-        hits: 1
+        expiresAt: new Date(Date.now() + ttlSeconds * 1000),
+        hits: 0
       });
+      this.trimCache(options?.maxCacheEntries ?? this.options.maxCacheEntries);
     }
-    
-    // reg no histórico
-    this.addToHistory(templateId, enhancedTemplate);
-    
-    return enhancedTemplate;
+    this.addToHistory(templateId, enhanced, options);
+    return this.copyTemplate(enhanced);
   }
-  
-  /**
-   * Cria um template a partir de um template existente (clone)
-   */
-  cloneTemplate(
-    template: ITemplate,
-    modifications?: Partial<ITemplateConfig>
-  ): ITemplate {
-    const newConfig = {
-      ...template.config,
-      ...modifications
-    };
-    
-    return this.createTemplate(
-      template.theme,
-      template.variant,
-      newConfig
-    );
+
+  cloneTemplate(template: ITemplate, modifications?: Partial<ITemplateConfig>): ITemplate {
+    const newConfig = { ...cloneConfig(template.config), ...cloneConfig(modifications || {}) };
+    return this.createTemplate(template.theme, template.variant, newConfig);
   }
-  
-  /**
-   * Renderiza um template com os dados fornecidos
-   */
-  async renderTemplate(
-    template: ITemplate,
-    data: any,
-    options?: { preview?: boolean }
-  ): Promise<string> {
+
+  async renderTemplate(template: ITemplate, data: any, options?: { preview?: boolean }): Promise<string> {
     try {
-      // add metadados para preview se necessário
+      // _meta é reservado e sempre produzido internamente, nunca aceito do chamador.
       const renderData = {
-        ...data,
+        ...(data && typeof data === 'object' ? data : {}),
         _meta: {
-          isPreview: options?.preview || this.options.preview,
+          isPreview: options?.preview ?? this.options.preview,
           renderDate: new Date().toISOString(),
           templateName: template.name,
           theme: template.theme,
           variant: template.variant
         }
       };
-      
-      // render template
-      let html = await template.render(renderData);
-      
-      // Minificar HTML se necessário
-      if (this.options.minify) {
-        html = this.minifyHtml(html);
-      }
-
-      console.log(`Template ${template.name} rendered successfully.`);
-      console.log(`Render metadata:`, renderData._meta);
-      console.log(html)
-      
-      return html;
+      const html = await template.render(renderData);
+      // Minificação global removida: colapsar whitespace corrompia texto pré-formatado e <code>.
+      return this.options.minify ? this.minifyHtml(html) : html;
     } catch (error) {
-      throw new Error(`Failed to render template: ${error}`);
+      throw new Error(`Failed to render template: ${error instanceof Error ? error.message : String(error)}`, { cause: error });
     }
   }
-  
-  /**
-   * Pré-visualiza um template sem enviar email
-   */
-  async previewTemplate(
-    themeType: ThemeType,
-    variant: 'light' | 'dark',
-    config: ITemplateConfig,
-    data: any
-  ): Promise<string> {
+
+  async previewTemplate(themeType: ThemeType, variant: 'light' | 'dark', config: ITemplateConfig, data: any): Promise<string> {
     const template = this.createTemplate(themeType, variant, config, { cache: false });
     return this.renderTemplate(template, data, { preview: true });
   }
-  
-  /**
-   * Obtém informações sobre um tema específico
-   */
-  getThemeInfo(themeType: ThemeType): {
-    name: string;
-    description: string;
-    features: string[];
-    availableVariants: ('light' | 'dark')[];
-    defaultConfig: Partial<ITemplateConfig>;
-  } {
+
+  getThemeInfo(themeType: ThemeType): { name: string; description: string; features: string[]; availableVariants: ('light' | 'dark')[]; defaultConfig: Partial<ITemplateConfig> } {
     const info = TemplateFactory.getThemeInfo(themeType);
     const theme = TemplateFactory.getTheme(themeType);
-    
-    return {
-      ...info,
-      availableVariants: ['light', 'dark'],
-      defaultConfig: this.getDefaultConfigForTheme(themeType, theme)
-    };
+    if (!info || !theme) throw new Error(`Theme ${themeType} not found`);
+    return { ...info, availableVariants: ['light', 'dark'], defaultConfig: this.getDefaultConfigForTheme(themeType) };
   }
-  
-  /**
-   * Lista todos os temas disponíveis
-   */
-  listThemes(): ThemeType[] {
-    return TemplateFactory.listThemes();
-  }
-  
-  /**
-   * Obtém estatísticas de uso dos templates
-   */
-  getTemplateStats(): {
-    totalTemplates: number;
-    cachedTemplates: number;
-    totalHits: number;
-    templatesByTheme: Record<ThemeType, number>;
-    cacheHitRate: number;
-  } {
+
+  listThemes(): ThemeType[] { return TemplateFactory.listThemes(); }
+
+  getTemplateStats(): { totalTemplates: number; cachedTemplates: number; totalHits: number; cacheRequests: number; templatesByTheme: Record<ThemeType, number>; cacheHitRate: number } {
     const templatesByTheme: Record<ThemeType, number> = {
-      [ThemeType.SYSTEM]: 0,
-      [ThemeType.MONOKAI]: 0,
-      [ThemeType.MODERN]: 0,
-      [ThemeType.CORPORATE]: 0,
-      [ThemeType.MINIMAL]: 0
+      [ThemeType.SYSTEM]: 0, [ThemeType.MONOKAI]: 0, [ThemeType.MODERN]: 0,
+      [ThemeType.CORPORATE]: 0, [ThemeType.MINIMAL]: 0
     };
-    
-    let totalHits = 0;
-    
     for (const cache of this.templateCache.values()) {
-      const theme = cache.template.theme;
-      templatesByTheme[theme]++;
-      totalHits += cache.hits;
+      templatesByTheme[cache.template.theme]++;
     }
-    
     const totalCached = this.templateCache.size;
-    const totalInHistory = this.templateHistory.size;
-    
     return {
-      totalTemplates: totalInHistory,
+      totalTemplates: this.templateHistory.size,
       cachedTemplates: totalCached,
-      totalHits,
+      totalHits: this.cacheHits,
+      cacheRequests: this.cacheRequests,
       templatesByTheme,
-      cacheHitRate: totalCached > 0 ? (totalHits / totalCached) * 100 : 0
+      cacheHitRate: this.cacheRequests > 0 ? (this.cacheHits / this.cacheRequests) * 100 : 0
     };
   }
-  
-  /**
-   * Limpa o cache de templates
-   */
+
   clearCache(themeType?: ThemeType): number {
     let cleared = 0;
-    
-    if (themeType) {
-      for (const [id, cache] of this.templateCache.entries()) {
-        if (cache.template.theme === themeType) {
-          this.templateCache.delete(id);
-          cleared++;
-        }
+    for (const [id, cache] of this.templateCache.entries()) {
+      if (!themeType || cache.template.theme === themeType) {
+        this.templateCache.delete(id);
+        cleared++;
       }
-    } else {
-      cleared = this.templateCache.size;
-      this.templateCache.clear();
     }
-    
     return cleared;
   }
-  
-  /**
-   * Obtém histórico de versões de um template
-   */
+
   getTemplateHistory(templateId: string): ITemplate[] {
-    return this.templateHistory.get(templateId) || [];
+    return (this.templateHistory.get(templateId) || []).map(template => this.copyTemplate(template));
   }
-  
-  /**
-   * Restaura uma versão anterior do template
-   */
-  restoreTemplateVersion(
-    templateId: string,
-    versionIndex: number
-  ): ITemplate | null {
+
+  restoreTemplateVersion(templateId: string, versionIndex: number): ITemplate | null {
     const history = this.templateHistory.get(templateId);
-    if (!history || versionIndex >= history.length) {
-      return null;
-    }
-    
+    if (!history || !Number.isInteger(versionIndex) || versionIndex < 0 || versionIndex >= history.length) return null;
     const oldTemplate = history[versionIndex];
-    return this.createTemplate(
-      oldTemplate.theme,
-      oldTemplate.variant,
-      oldTemplate.config,
-      { cache: false }
-    );
+    return this.createTemplate(oldTemplate.theme, oldTemplate.variant, oldTemplate.config, { cache: false });
   }
-  
-  /**
-   * Valida a configuração do template
-   */
+
+  /** Encerrar o timer de limpeza quando a instância não for mais necessária. */
+  dispose(): void { clearInterval(this.cleanupTimer); }
+
   private validateTemplateConfig(config: ITemplateConfig): void {
     const errors: string[] = [];
-    
-    // Validar header
-    if (config.header?.show && config.header?.logo) {
-      if (config.header.logo.type === 'image' && !config.header.logo.imageUrl) {
-        errors.push('Logo image requires imageUrl');
+    const fail = (fn: () => void) => { try { fn(); } catch (error) { errors.push(error instanceof Error ? error.message : String(error)); } };
+    const enumValue = (value: any, allowed: string[], label: string) => {
+      if (value !== undefined && !allowed.includes(value)) errors.push(`Invalid ${label}: ${value}`);
+    };
+
+    enumValue(config.layout, ['full', 'minimal'], 'layout');
+    enumValue(config.spacing, ['compact', 'normal', 'relaxed'], 'spacing');
+    enumValue(config.borderRadius, ['none', 'small', 'medium', 'large'], 'borderRadius');
+
+    if (config.header) {
+      if (typeof config.header.show !== 'boolean') errors.push('header.show must be a boolean');
+      if (config.header.logo) {
+        enumValue(config.header.logo.type, ['text', 'image'], 'header.logo.type');
+        enumValue(config.header.logo.size, ['small', 'medium', 'large'], 'header.logo.size');
+        if (config.header.logo.type === 'image' && !hasTemplatePlaceholder(config.header.logo.imageUrl)) fail(() => assertSafeUrl(config.header!.logo!.imageUrl, false, 'header.logo.imageUrl'));
+        if (config.header.logo.type === 'text' && typeof config.header.logo.text !== 'string') errors.push('header.logo.text must be a string');
       }
-      if (config.header.logo.type === 'text' && !config.header.logo.text) {
-        errors.push('Logo text requires text content');
+      if (config.header.backgroundColor !== undefined && !isSafeColor(config.header.backgroundColor)) errors.push('Invalid header.backgroundColor');
+      if (config.header.textColor !== undefined && !isSafeColor(config.header.textColor)) errors.push('Invalid header.textColor');
+    }
+    const body = config.body;
+    if (body) {
+      enumValue(body.alignment, ['left', 'center', 'right'], 'body.alignment');
+      enumValue(body.buttonVariant, ['primary', 'secondary', 'success', 'danger'], 'body.buttonVariant');
+      if (body.fontSize !== undefined && (!Number.isFinite(body.fontSize) || body.fontSize < 8 || body.fontSize > 72)) errors.push('body.fontSize must be between 8 and 72');
+      for (const key of ['backgroundColor', 'textColor'] as const) {
+        const color = body[key];
+        if (color !== undefined && !isSafeColor(color)) errors.push(`Invalid body.${key}`);
+      }
+      const buttonUrl = body.buttonUrl;
+      if (buttonUrl !== undefined && !hasTemplatePlaceholder(buttonUrl)) fail(() => assertSafeUrl(buttonUrl, true, 'body.buttonUrl'));
+      for (const key of ['title', 'message', 'content', 'buttonText'] as const) {
+        if (body[key] !== undefined && typeof body[key] !== 'string') errors.push(`body.${key} must be a string`);
       }
     }
-    
-    // Validar footer
-    if (config.footer?.show) {
-      if (config.footer.links) {
-        for (const link of config.footer.links) {
-          if (!link.text || !link.url) {
-            errors.push('Footer links require both text and url');
-          }
-        }
+    const footer = config.footer;
+    if (footer) {
+      if (typeof footer.show !== 'boolean') errors.push('footer.show must be a boolean');
+      for (const key of ['backgroundColor', 'textColor'] as const) {
+        const color = footer[key];
+        if (color !== undefined && !isSafeColor(color)) errors.push(`Invalid footer.${key}`);
       }
+      for (const link of footer.links || []) {
+        if (!link || typeof link.text !== 'string') errors.push('Footer links require text and URL');
+        else if (!hasTemplatePlaceholder(link.url)) fail(() => assertSafeUrl(link.url, true, 'footer link URL'));
+      }
+      for (const link of footer.socialLinks || []) {
+        if (!link || !SOCIAL_PLATFORMS.has(link.platform)) errors.push(`Invalid social platform: ${link?.platform}`);
+        else if (!hasTemplatePlaceholder(link.url)) fail(() => assertSafeUrl(link.url, false, 'social link URL'));
+      }
+      const unsubscribeUrl = footer.unsubscribeUrl;
+      if (unsubscribeUrl !== undefined && !hasTemplatePlaceholder(unsubscribeUrl)) fail(() => assertSafeUrl(unsubscribeUrl, true, 'footer.unsubscribeUrl'));
     }
-    
-    // Validar layout
-    const validLayouts = ['full', 'minimal'];
-    if (config.layout && !validLayouts.includes(config.layout)) {
-      errors.push(`Invalid layout: ${config.layout}. Must be one of: ${validLayouts.join(', ')}`);
-    }
-    
-    // Validar spacing
-    const validSpacing = ['compact', 'normal', 'relaxed'];
-    if (config.spacing && !validSpacing.includes(config.spacing)) {
-      errors.push(`Invalid spacing: ${config.spacing}. Must be one of: ${validSpacing.join(', ')}`);
-    }
-    
-    // Validar borderRadius
-    const validBorderRadius = ['none', 'small', 'medium', 'large'];
-    if (config.borderRadius && !validBorderRadius.includes(config.borderRadius)) {
-      errors.push(`Invalid borderRadius: ${config.borderRadius}. Must be one of: ${validBorderRadius.join(', ')}`);
-    }
-    
-    if (errors.length > 0) {
-      throw new Error(`Template configuration validation failed:\n${errors.join('\n')}`);
-    }
+    if (errors.length) throw new Error(`Template configuration validation failed:\n${errors.join('\n')}`);
   }
-  
-  /**
-   * Gera um ID único para o template baseado na configuração
-   */
-  private generateTemplateId(
-    themeType: ThemeType,
-    variant: 'light' | 'dark',
-    config: ITemplateConfig
-  ): string {
-    const configString = JSON.stringify({
-      theme: themeType,
-      variant,
-      config
-    });
-    
-    // Hash simples para ID
-    let hash = 0;
-    for (let i = 0; i < configString.length; i++) {
-      const char = configString.charCodeAt(i);
-      hash = ((hash << 5) - hash) + char;
-      hash = hash & hash;
-    }
-    
-    return `${themeType}_${variant}_${Math.abs(hash)}`;
+
+  private assertThemeAndVariant(themeType: ThemeType, variant: string): void {
+    if (!VALID_THEMES.includes(themeType)) throw new Error(`Invalid theme: ${themeType}`);
+    if (variant !== 'light' && variant !== 'dark') throw new Error(`Invalid template variant: ${variant}`);
   }
-  
-  /**
-   * Adiciona funcionalidades extras ao template
-   */
+
+  private generateTemplateId(themeType: ThemeType, variant: 'light' | 'dark', config: ITemplateConfig): string {
+    const canonical = JSON.stringify(canonicalize({ theme: themeType, variant, config }));
+    return `${themeType}_${variant}_${createHash('sha256').update(canonical).digest('hex')}`;
+  }
+
   private enhanceTemplate(template: ITemplate, templateId: string): ITemplate {
-    const enhanced = { ...template };
-    
-    // add método para obter versão
-    (enhanced as any).getVersion = () => {
-      const history = this.templateHistory.get(templateId);
-      return history ? history.length : 1;
-    };
-    
-    // add método para obter ID
-    (enhanced as any).getId = () => templateId;
-    
-    // add método para clonar
-    (enhanced as any).clone = (modifications?: Partial<ITemplateConfig>) => {
-      return this.cloneTemplate(enhanced, modifications);
-    };
-    
+    const enhanced = { ...template } as ITemplate & { getVersion?: () => number; getId?: () => string; clone?: (modifications?: Partial<ITemplateConfig>) => ITemplate };
+    enhanced.getVersion = () => this.templateHistory.get(templateId)?.length || 1;
+    enhanced.getId = () => templateId;
+    enhanced.clone = (modifications?: Partial<ITemplateConfig>) => this.cloneTemplate(enhanced, modifications);
     return enhanced;
   }
-  
-  /**
-   * Adiciona template ao histórico
-   */
-  private addToHistory(templateId: string, template: ITemplate): void {
-    if (!this.templateHistory.has(templateId)) {
-      this.templateHistory.set(templateId, []);
-    }
-    
-    const history = this.templateHistory.get(templateId)!;
+
+  private copyTemplate(template: ITemplate): ITemplate {
+    return { ...template, config: cloneConfig(template.config) };
+  }
+
+  private addToHistory(templateId: string, template: ITemplate, options?: TemplateOptions): void {
+    const history = this.templateHistory.get(templateId) || [];
     history.push(template);
-    
-    // Manter apenas últimas 10 versões
-    if (history.length > 10) {
-      history.shift();
+    const perTemplateLimit = options?.maxVersionsPerTemplate ?? this.options.maxVersionsPerTemplate;
+    while (history.length > perTemplateLimit) history.shift();
+    this.templateHistory.delete(templateId);
+    this.templateHistory.set(templateId, history);
+    const historyLimit = options?.maxHistoryEntries ?? this.options.maxHistoryEntries;
+    while (this.templateHistory.size > historyLimit) {
+      const oldest = this.templateHistory.keys().next().value;
+      if (oldest === undefined) break;
+      this.templateHistory.delete(oldest);
     }
   }
-  
-  /**
-   * Remove templates expirados do cache
-   */
+
+  private trimCache(limit: number): void {
+    while (this.templateCache.size > limit) {
+      const oldest = this.templateCache.keys().next().value;
+      if (oldest === undefined) break;
+      this.templateCache.delete(oldest);
+    }
+  }
+
   private cleanExpiredCache(): void {
     const now = Date.now();
     for (const [id, cache] of this.templateCache.entries()) {
-      if (cache.expiresAt.getTime() < now) {
-        this.templateCache.delete(id);
-      }
+      if (cache.expiresAt.getTime() <= now) this.templateCache.delete(id);
     }
   }
-  
-  /**
-   * Minifica o HTML para reduzir tamanho
-   */
-  private minifyHtml(html: string): string {
-    return html
-      .replace(/\s+/g, ' ')
-      .replace(/>\s+</g, '><')
-      .replace(/<!--.*?-->/g, '')
-      .trim();
+
+  // Mantido como transformação deliberadamente não destrutiva. HTML minification baseada em regex
+  // alteraria espaços de texto e conteúdo de <code>/<pre>; minify=true preserva o HTML original.
+  private minifyHtml(html: string): string { return html; }
+
+  private validateLimit(value: number, name: string): void {
+    if (!Number.isInteger(value) || value < 1) throw new Error(`${name} must be a positive integer`);
   }
-  
-  /**
-   * Obtém configuração padrão para um tema
-   */
-  private getDefaultConfigForTheme(
-    themeType: ThemeType,
-    theme?: ITheme
-  ): Partial<ITemplateConfig> {
+
+  private getDefaultConfigForTheme(themeType: ThemeType): Partial<ITemplateConfig> {
     const baseConfig: Partial<ITemplateConfig> = {
-      header: {
-        show: true,
-        logo: {
-          type: 'text',
-          text: 'MyApp',
-          size: 'medium'
-        }
-      },
-      footer: {
-        show: true,
-        copyrightText: `© ${new Date().getFullYear()} MyApp. All rights reserved.`
-      },
-      layout: 'full',
-      spacing: 'normal',
-      borderRadius: 'medium'
+      header: { show: true, logo: { type: 'text', text: 'MyApp', size: 'medium' } },
+      footer: { show: true, copyrightText: `© ${new Date().getFullYear()} MyApp. All rights reserved.` },
+      layout: 'full', spacing: 'normal', borderRadius: 'medium'
     };
-    
-    // Ajustes específicos por tema
     switch (themeType) {
-      case ThemeType.MONOKAI:
-        return {
-          ...baseConfig,
-          borderRadius: 'small',
-          spacing: 'normal'
-        };
-      case ThemeType.MODERN:
-        return {
-          ...baseConfig,
-          borderRadius: 'large',
-          spacing: 'relaxed'
-        };
-      case ThemeType.CORPORATE:
-        return {
-          ...baseConfig,
-          borderRadius: 'small',
-          spacing: 'normal'
-        };
-      case ThemeType.MINIMAL:
-        return {
-          ...baseConfig,
-          borderRadius: 'none',
-          spacing: 'relaxed'
-        };
-      default:
-        return baseConfig;
+      case ThemeType.MONOKAI: return { ...baseConfig, borderRadius: 'small' };
+      case ThemeType.MODERN: return { ...baseConfig, borderRadius: 'large', spacing: 'relaxed' };
+      case ThemeType.CORPORATE: return { ...baseConfig, borderRadius: 'small' };
+      case ThemeType.MINIMAL: return { ...baseConfig, borderRadius: 'none', spacing: 'relaxed' };
+      default: return baseConfig;
     }
   }
-  
-  /**
-   * Pré-carrega templates no cache
-   */
-  async preloadTemplates(
-    templates: Array<{
-      themeType: ThemeType;
-      variant: 'light' | 'dark';
-      config: ITemplateConfig;
-    }>
-  ): Promise<void> {
-    const promises = templates.map(async ({ themeType, variant, config }) => {
-      this.createTemplate(themeType, variant, config);
-    });
-    
-    await Promise.all(promises);
+
+  async preloadTemplates(templates: Array<{ themeType: ThemeType; variant: 'light' | 'dark'; config: ITemplateConfig }>): Promise<void> {
+    await Promise.all(templates.map(({ themeType, variant, config }) => this.createTemplate(themeType, variant, config)));
   }
-  
-  /**
-   * Exporta template para formato JSON
-   */
+
   exportTemplate(template: ITemplate): string {
-    return JSON.stringify({
-      name: template.name,
-      theme: template.theme,
-      variant: template.variant,
-      config: template.config,
-      exportedAt: new Date().toISOString(),
-      version: (template as any).getVersion?.() || 1
-    }, null, 2);
+    return JSON.stringify({ name: template.name, theme: template.theme, variant: template.variant, config: template.config, exportedAt: new Date().toISOString(), version: (template as any).getVersion?.() || 1 }, null, 2);
   }
-  
-  /**
-   * Importa template de formato JSON
-   */
+
   importTemplate(jsonData: string): ITemplate {
     try {
       const data = JSON.parse(jsonData);
-      
-      if (!data.theme || !data.variant || !data.config) {
-        throw new Error('Invalid template data: missing required fields');
+      if (!data || typeof data !== 'object' || !VALID_THEMES.includes(data.theme) || !['light', 'dark'].includes(data.variant) || !data.config || typeof data.config !== 'object' || Array.isArray(data.config)) {
+        throw new Error('Invalid template data: theme, variant, and config are required and must be valid');
       }
-      
-      return this.createTemplate(
-        data.theme,
-        data.variant,
-        data.config
-      );
+      return this.createTemplate(data.theme, data.variant, data.config);
     } catch (error) {
-      throw new Error(`Failed to import template: ${error}`);
+      throw new Error(`Failed to import template: ${error instanceof Error ? error.message : String(error)}`, { cause: error });
     }
   }
-  
-  /**
-   * Gera um template de exemplo para demonstração
-   */
-  generateExampleTemplate(
-    themeType: ThemeType = ThemeType.MODERN,
-    variant: 'light' | 'dark' = 'light'
-  ): ITemplate {
+
+  generateExampleTemplate(themeType: ThemeType = ThemeType.MODERN, variant: 'light' | 'dark' = 'light'): ITemplate {
     const exampleConfig: ITemplateConfig = {
-      header: {
-        show: true,
-        logo: {
-          type: 'text',
-          text: 'ExampleApp',
-          size: 'medium'
-        },
-        backgroundColor: variant === 'light' ? '#ffffff' : '#1a1a1a',
-        textColor: variant === 'light' ? '#111827' : '#f9fafb'
-      },
+      header: { show: true, logo: { type: 'text', text: 'ExampleApp', size: 'medium' }, backgroundColor: variant === 'light' ? '#ffffff' : '#1a1a1a', textColor: variant === 'light' ? '#111827' : '#f9fafb' },
       footer: {
         show: true,
-        links: [
-          { text: 'Privacy Policy', url: 'https://example.com/privacy' },
-          { text: 'Terms of Service', url: 'https://example.com/terms' },
-          { text: 'Contact', url: 'https://example.com/contact' }
-        ],
-        socialLinks: [
-          { platform: 'twitter', url: 'https://twitter.com/example' },
-          { platform: 'github', url: 'https://github.com/example' },
-          { platform: 'linkedin', url: 'https://linkedin.com/company/example' }
-        ],
-        copyrightText: `© ${new Date().getFullYear()} ExampleApp. All rights reserved.`,
-        unsubscribeText: 'Unsubscribe',
-        backgroundColor: variant === 'light' ? '#f9fafb' : '#111827',
-        textColor: variant === 'light' ? '#6b7280' : '#9ca3af'
+        links: [ { text: 'Privacy Policy', url: 'https://example.com/privacy' }, { text: 'Terms of Service', url: 'https://example.com/terms' }, { text: 'Contact', url: 'https://example.com/contact' } ],
+        socialLinks: [ { platform: 'twitter', url: 'https://twitter.com/example' }, { platform: 'github', url: 'https://github.com/example' }, { platform: 'linkedin', url: 'https://linkedin.com/company/example' } ],
+        copyrightText: `© ${new Date().getFullYear()} ExampleApp. All rights reserved.`, unsubscribeText: 'Unsubscribe',
+        backgroundColor: variant === 'light' ? '#f9fafb' : '#111827', textColor: variant === 'light' ? '#6b7280' : '#9ca3af'
       },
-      layout: 'full',
-      spacing: 'normal',
-      borderRadius: themeType === ThemeType.MINIMAL ? 'none' : 'medium'
+      layout: 'full', spacing: 'normal', borderRadius: themeType === ThemeType.MINIMAL ? 'none' : 'medium'
     };
-    
     return this.createTemplate(themeType, variant, exampleConfig);
   }
-  
-  /**
-   * Valida se um template é válido
-   */
+
   isValidTemplate(template: any): boolean {
     try {
-      // Verificar propriedades obrigatórias
-      if (!template || typeof template !== 'object') return false;
-      if (!template.name || typeof template.name !== 'string') return false;
-      if (!template.theme || !Object.values(ThemeType).includes(template.theme)) return false;
-      if (!template.variant || !['light', 'dark'].includes(template.variant)) return false;
-      if (!template.config || typeof template.config !== 'object') return false;
-      if (typeof template.render !== 'function') return false;
-      
+      if (!template || typeof template !== 'object' || typeof template.name !== 'string' || !VALID_THEMES.includes(template.theme) || !['light', 'dark'].includes(template.variant) || !template.config || typeof template.config !== 'object' || typeof template.render !== 'function') return false;
+      this.validateTemplateConfig(template.config);
       return true;
-    } catch {
-      return false;
-    }
+    } catch { return false; }
   }
-  
-  /**
-   * Obtém estatísticas detalhadas de um template específico
-   */
-  getTemplateDetails(templateId: string): {
-    template: ITemplate | null;
-    history: ITemplate[];
-    cacheInfo: TemplateCache | null;
-    usageCount: number;
-  } {
+
+  getTemplateDetails(templateId: string): { template: ITemplate | null; history: ITemplate[]; cacheInfo: TemplateCache | null; usageCount: number } {
     const cacheInfo = this.templateCache.get(templateId) || null;
-    const history = this.templateHistory.get(templateId) || [];
-    const usageCount = cacheInfo?.hits || 0;
-    
+    const history = (this.templateHistory.get(templateId) || []).map(template => this.copyTemplate(template));
+    const template = cacheInfo?.template || history[history.length - 1] || null;
     return {
-      template: cacheInfo?.template || history[history.length - 1] || null,
+      template: template ? this.copyTemplate(template) : null,
       history,
-      cacheInfo,
-      usageCount
+      cacheInfo: cacheInfo ? { ...cacheInfo, template: this.copyTemplate(cacheInfo.template), createdAt: new Date(cacheInfo.createdAt), expiresAt: new Date(cacheInfo.expiresAt) } : null,
+      usageCount: cacheInfo?.hits || 0
     };
   }
 }

@@ -17,6 +17,7 @@ export interface ITemplateConfig {
 export interface IBodyConfig {
     title?: string;
     message?: string;
+    /** HTML intencionalmente confiável; os demais campos textuais são escapados pelo renderer. */
     content?: string;
     buttonText?: string;
     buttonUrl?: string;
@@ -45,11 +46,13 @@ export interface IFooterConfig {
         url: string;
     }>;
     socialLinks?: Array<{
-        platform: 'facebook' | 'twitter' | 'linkedin' | 'github' | 'instagram' | 'youtube' | 'tiktok' | 'pinterest' | 'reddit' | 'pinterest' | 'tiktok' | 'gitlab' | 'stackoverflow' | 'medium' | 'dribbble' | 'behance' | 'telegram';
+        platform: 'facebook' | 'twitter' | 'linkedin' | 'github' | 'instagram' | 'youtube' | 'tiktok' | 'pinterest' | 'reddit' | 'gitlab' | 'stackoverflow' | 'medium' | 'dribbble' | 'behance' | 'telegram';
         url: string;
     }>;
     copyrightText?: string;
     unsubscribeText?: string;
+    /** URL opcional do link de cancelamento; sem ela, o texto é exibido sem href fictício. */
+    unsubscribeUrl?: string;
     backgroundColor?: string;
     textColor?: string;
 }

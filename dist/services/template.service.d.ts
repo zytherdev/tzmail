@@ -6,81 +6,41 @@ interface TemplateCache {
     expiresAt: Date;
     hits: number;
 }
-interface TemplateOptions {
+export interface ITemplateServiceOptions {
+    /** Cache ligado por padrão; pode ser desligado por chamada. */
     cache?: boolean;
+    /** TTL em segundos. Zero desabilita o cache para aquela criação; valores negativos/não finitos são inválidos. */
     cacheTTL?: number;
     validateConfig?: boolean;
+    /** Mantido por compatibilidade. A transformação destrutiva foi desativada. */
     minify?: boolean;
     preview?: boolean;
+    /** Limite de templates em cache; padrão finito de 100. */
+    maxCacheEntries?: number;
+    /** Limite de IDs de template guardados no histórico; padrão finito de 100. */
+    maxHistoryEntries?: number;
+    /** Máximo de versões por ID de template; padrão 10. */
+    maxVersionsPerTemplate?: number;
 }
+type TemplateOptions = ITemplateServiceOptions;
 /**
- * TemplateService - Gerencia a criação, renderização e gerenciamento de templates de email
- *
- * Métodos:
- * - createTemplate(themeType, variant, config, options): ITemplate
- *   Cria um novo template com as configurações especificadas.
- *
- * - cloneTemplate(template, modifications): ITemplate
- *   Cria um template a partir de um template existente (clone).
- *
- * - renderTemplate(template, data, options): Promise<string>
- *   Renderiza um template com os dados fornecidos.
- *
- * - previewTemplate(themeType, variant, config, data): Promise<string>
- *   Pré-visualiza um template sem enviar email.
- *
- * - getThemeInfo(themeType): object
- *   Obtém informações sobre um tema específico.
- *
- * - listThemes(): ThemeType[]
- *   Lista todos os temas disponíveis.
- *
- * - getTemplateStats(): object
- *   Obtém estatísticas de uso dos templates.
- *
- * - clearCache(themeType?): number
- *   Limpa o cache de templates, opcionalmente por tema.
- *
- * - getTemplateHistory(templateId): ITemplate[]
- *   Obtém histórico de versões de um template.
- *
- * - restoreTemplateVersion(templateId, versionIndex): ITemplate | null
- *   Restaura uma versão anterior do template.
- *
- * Exemplo de uso:
- *
- * const templateService = new TemplateService();
- * const myTemplate = templateService.createTemplate(ThemeType.MODERN, 'light', { header: { show: true } });
- * const html = await templateService.renderTemplate(myTemplate, { username: 'John' });
- * console.log(html);
+ * TemplateService - criação, renderização e gestão de templates de email.
+ * Cache e histórico mantêm limites finitos e retornam snapshots defensivos.
  */
 export declare class TemplateService {
-    private options;
     private templateCache;
-    private defaultTTL;
     private templateHistory;
+    private cacheRequests;
+    private cacheHits;
+    private readonly options;
+    private cleanupTimer;
     constructor(options?: TemplateOptions);
-    /**
-     * Cria um novo template com as configurações especificadas
-     */
     createTemplate(themeType: ThemeType, variant: 'light' | 'dark', config: ITemplateConfig, options?: TemplateOptions): ITemplate;
-    /**
-     * Cria um template a partir de um template existente (clone)
-     */
     cloneTemplate(template: ITemplate, modifications?: Partial<ITemplateConfig>): ITemplate;
-    /**
-     * Renderiza um template com os dados fornecidos
-     */
     renderTemplate(template: ITemplate, data: any, options?: {
         preview?: boolean;
     }): Promise<string>;
-    /**
-     * Pré-visualiza um template sem enviar email
-     */
     previewTemplate(themeType: ThemeType, variant: 'light' | 'dark', config: ITemplateConfig, data: any): Promise<string>;
-    /**
-     * Obtém informações sobre um tema específico
-     */
     getThemeInfo(themeType: ThemeType): {
         name: string;
         description: string;
@@ -88,87 +48,40 @@ export declare class TemplateService {
         availableVariants: ('light' | 'dark')[];
         defaultConfig: Partial<ITemplateConfig>;
     };
-    /**
-     * Lista todos os temas disponíveis
-     */
     listThemes(): ThemeType[];
-    /**
-     * Obtém estatísticas de uso dos templates
-     */
     getTemplateStats(): {
         totalTemplates: number;
         cachedTemplates: number;
         totalHits: number;
+        cacheRequests: number;
         templatesByTheme: Record<ThemeType, number>;
         cacheHitRate: number;
     };
-    /**
-     * Limpa o cache de templates
-     */
     clearCache(themeType?: ThemeType): number;
-    /**
-     * Obtém histórico de versões de um template
-     */
     getTemplateHistory(templateId: string): ITemplate[];
-    /**
-     * Restaura uma versão anterior do template
-     */
     restoreTemplateVersion(templateId: string, versionIndex: number): ITemplate | null;
-    /**
-     * Valida a configuração do template
-     */
+    /** Encerrar o timer de limpeza quando a instância não for mais necessária. */
+    dispose(): void;
     private validateTemplateConfig;
-    /**
-     * Gera um ID único para o template baseado na configuração
-     */
+    private assertThemeAndVariant;
     private generateTemplateId;
-    /**
-     * Adiciona funcionalidades extras ao template
-     */
     private enhanceTemplate;
-    /**
-     * Adiciona template ao histórico
-     */
+    private copyTemplate;
     private addToHistory;
-    /**
-     * Remove templates expirados do cache
-     */
+    private trimCache;
     private cleanExpiredCache;
-    /**
-     * Minifica o HTML para reduzir tamanho
-     */
     private minifyHtml;
-    /**
-     * Obtém configuração padrão para um tema
-     */
+    private validateLimit;
     private getDefaultConfigForTheme;
-    /**
-     * Pré-carrega templates no cache
-     */
     preloadTemplates(templates: Array<{
         themeType: ThemeType;
         variant: 'light' | 'dark';
         config: ITemplateConfig;
     }>): Promise<void>;
-    /**
-     * Exporta template para formato JSON
-     */
     exportTemplate(template: ITemplate): string;
-    /**
-     * Importa template de formato JSON
-     */
     importTemplate(jsonData: string): ITemplate;
-    /**
-     * Gera um template de exemplo para demonstração
-     */
     generateExampleTemplate(themeType?: ThemeType, variant?: 'light' | 'dark'): ITemplate;
-    /**
-     * Valida se um template é válido
-     */
     isValidTemplate(template: any): boolean;
-    /**
-     * Obtém estatísticas detalhadas de um template específico
-     */
     getTemplateDetails(templateId: string): {
         template: ITemplate | null;
         history: ITemplate[];

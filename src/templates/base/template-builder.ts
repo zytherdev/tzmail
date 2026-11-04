@@ -6,6 +6,19 @@ import { ModernTheme } from '../themes/modern.theme';
 import { CorporateTheme } from '../themes/corporate.theme';
 import { MinimalTheme } from '../themes/minimal.theme';
 
+function escapeHtml(value: unknown): string {
+  return String(value ?? '').replace(/[&<>"']/g, character => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[character]!));
+}
+
+function safeHref(value: string, allowMailto = false): string {
+  if (typeof value !== 'string' || !value.trim() || /[\u0000-\u0020"'<>\\]/.test(value)) throw new Error('Unsafe URL in template');
+  let url: URL;
+  try { url = new URL(value); } catch { throw new Error('Template URLs must be absolute'); }
+  const schemes = allowMailto ? ['http:', 'https:', 'mailto:'] : ['http:', 'https:'];
+  if (!schemes.includes(url.protocol.toLowerCase())) throw new Error('Unsafe URL scheme in template');
+  return escapeHtml(value);
+}
+
 export class TemplateBuilder {
   private template: string = '';
   private theme: ITheme;
@@ -28,7 +41,8 @@ export class TemplateBuilder {
     const isMinimal = this.theme.id === 'minimal';
     
     let headerStyles = `
-      background-color: ${colors.background};
+      background-color: ${this.config.header?.backgroundColor || colors.background};
+      color: ${this.config.header?.textColor || colors.text};
       padding: ${this.theme.spacing.lg} ${this.theme.spacing.xl};
     `;
     
@@ -88,7 +102,7 @@ export class TemplateBuilder {
                     ${isCorporate ? 'font-family: serif;' : ''}
                     ${isMinimal ? 'font-weight: 300;' : ''}
                   ">
-                    ${content}
+                    ${escapeHtml(content)}
                   </td>
                 </tr>
               </table>
@@ -154,7 +168,7 @@ export class TemplateBuilder {
         `;
       }
       
-      return `<div style="${textStyles}">${logo.text || 'Logo'}</div>`;
+      return `<div style="${textStyles}">${escapeHtml(logo.text || 'Logo')}</div>`;
     }
 
     if (logo.type === 'image') {
@@ -174,7 +188,7 @@ export class TemplateBuilder {
         `;
       }
       
-      return `<img src="${logo.imageUrl}" alt="${logo.alt || 'Logo'}" style="${imageStyles}" />`;
+      return `<img src="${safeHref(logo.imageUrl || '')}" alt="${escapeHtml(logo.alt || 'Logo')}" style="${imageStyles}" />`;
     }
 
     return '';
@@ -341,14 +355,16 @@ export class TemplateBuilder {
     return highlighted;
   }
 
-  buildButton(text: string, url: string, variant: 'primary' | 'secondary' = 'primary'): this {
+  buildButton(text: string, url: string, variant: 'primary' | 'secondary' | 'success' | 'danger' = 'primary'): this {
     const colors = this.variant === 'light' ? this.theme.light : this.theme.dark;
     const isModern = this.theme.id === 'modern';
     const isMonokai = this.theme.id === 'monokai';
     const isCorporate = this.theme.id === 'corporate';
     const isMinimal = this.theme.id === 'minimal';
     
-    let buttonColor = variant === 'primary' ? colors.primary : colors.secondary;
+    if (!['primary', 'secondary', 'success', 'danger'].includes(variant)) throw new Error('Invalid CTA variant');
+    const safeUrl = safeHref(url, true);
+    const buttonColor = variant === 'primary' ? colors.primary : variant === 'secondary' ? colors.secondary : variant === 'success' ? '#16a34a' : '#dc2626';
     let buttonStyles = `
       display: inline-block;
       padding: 12px 24px!important;
@@ -422,14 +438,14 @@ export class TemplateBuilder {
             <table cellpadding="0" cellspacing="0" role="presentation">
               <tr>
                 <td style="${buttonStyles}">
-                  <a href="${url}" style="
+                  <a href="${safeUrl}" style="
                     text-decoration: none;
                     color: inherit;
                     display: inline-block;
                     font-weight: ${this.theme.typography.fontWeights.bold};
                     padding: 12px 24px;
                   ">
-                    ${text}
+                    ${escapeHtml(text)}
                   </a>
                 </td>
               </tr>
@@ -453,12 +469,12 @@ export class TemplateBuilder {
     const isMinimal = this.theme.id === 'minimal';
     
     let footerStyles = `
-      background-color: ${colors.background};
+      background-color: ${this.config.footer?.backgroundColor || colors.background};
       border-top: 1px solid ${colors.border};
       padding: ${this.theme.spacing.lg} ${this.theme.spacing.xl}!important;
       text-align: center;
       font-size: ${this.theme.typography.fontSizes.small};
-      color: ${colors.textMuted};
+      color: ${this.config.footer?.textColor || colors.textMuted};
     `;
     
     // styles para tema Corporate
@@ -515,7 +531,7 @@ export class TemplateBuilder {
                     color: ${colors.textMuted};
                     text-align: center;
                   ">
-                    ${this.config.footer.copyrightText}
+                    ${escapeHtml(this.config.footer.copyrightText)}
                   </td>
                 </tr>
               </table>
@@ -530,12 +546,9 @@ export class TemplateBuilder {
                     font-family: Arial, sans-serif;
                     font-size: 12px;
                   ">
-                    <a href="#" style="
-                      color: ${colors.textMuted};
-                      text-decoration: underline;
-                    ">
-                      ${this.config.footer.unsubscribeText}
-                    </a>
+                    ${this.config.footer.unsubscribeUrl
+                      ? `<a href="${safeHref(this.config.footer.unsubscribeUrl, true)}" style="color: ${colors.textMuted}; text-decoration: underline;">${escapeHtml(this.config.footer.unsubscribeText)}</a>`
+                      : escapeHtml(this.config.footer.unsubscribeText)}
                   </td>
                 </tr>
               </table>
@@ -597,8 +610,8 @@ export class TemplateBuilder {
               <tr>
                 ${this.config.footer.links.map(link => `
                   <td style="padding: 0 8px;">
-                    <a href="${link.url}" style="${linkStyles}">
-                      ${link.text}
+                    <a href="${safeHref(link.url, true)}" style="${linkStyles}">
+                      ${escapeHtml(link.text)}
                     </a>
                   </td>
                 `).join('')}
@@ -623,12 +636,12 @@ export class TemplateBuilder {
               <tr>
                 ${this.config.footer.socialLinks.map(link => `
                   <td style="padding: 0 6px;">
-                    <a href="${link.url}" target="_blank">
+                    <a href="${safeHref(link.url)}" target="_blank" rel="noopener noreferrer">
                       <img 
                         src="${this.getSocialIcon(link.platform)}"
                         width="20"
                         height="20"
-                        alt="${link.platform}"
+                        alt="${escapeHtml(link.platform)}"
                         style="display: block; border: 0;"
                       />
                     </a>
@@ -646,6 +659,7 @@ export class TemplateBuilder {
   private getSocialIcon(platform: string): string {
     const icons: Record<string, string> = {
       facebook: 'https://cdn.simpleicons.org/facebook/1877F2',
+      linkedin: 'https://cdn.simpleicons.org/linkedin/0A66C2',
       twitter: 'https://cdn.simpleicons.org/x/1DA1F2',
       github: 'https://cdn.simpleicons.org/github/000000',
       instagram: 'https://cdn.simpleicons.org/instagram/E4405F',
@@ -671,7 +685,7 @@ export class TemplateBuilder {
     const isCorporate = this.theme.id === 'corporate';
     const isMinimal = this.theme.id === 'minimal';
     
-    let wrapperStyles = 'margin: 0; padding: 0;';
+    const wrapperStyles = 'margin: 0; padding: 0;';
     let containerStyles = `max-width: ${isMinimal ? '640px' : '600px'}; margin: 0 auto;`;
     
     if (isModern) {

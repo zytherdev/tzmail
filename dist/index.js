@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.SystemTheme = exports.MonokaiTheme = exports.ModernTheme = exports.MinimalTheme = exports.CorporateTheme = exports.TemplateBuilder = exports.AttachmentService = exports.EmailService = exports.TemplateService = exports.ThemeType = exports.TemplateFactory = exports.EmailFactory = void 0;
+exports.SystemTheme = exports.MonokaiTheme = exports.ModernTheme = exports.MinimalTheme = exports.CorporateTheme = exports.TemplateBuilder = exports.BullMQEmailQueue = exports.AttachmentService = exports.EmailService = exports.TemplateService = exports.ThemeType = exports.TemplateFactory = exports.EmailFactory = void 0;
 var email_factory_1 = require("./factories/email-factory");
 Object.defineProperty(exports, "EmailFactory", { enumerable: true, get: function () { return email_factory_1.EmailFactory; } });
 var template_factory_1 = require("./factories/template-factory");
@@ -13,6 +13,8 @@ var email_service_1 = require("./services/email.service");
 Object.defineProperty(exports, "EmailService", { enumerable: true, get: function () { return email_service_1.EmailService; } });
 var attachment_service_1 = require("./services/attachment.service");
 Object.defineProperty(exports, "AttachmentService", { enumerable: true, get: function () { return attachment_service_1.AttachmentService; } });
+var bullmq_email_queue_1 = require("./queues/bullmq-email-queue");
+Object.defineProperty(exports, "BullMQEmailQueue", { enumerable: true, get: function () { return bullmq_email_queue_1.BullMQEmailQueue; } });
 var template_builder_1 = require("./templates/base/template-builder");
 Object.defineProperty(exports, "TemplateBuilder", { enumerable: true, get: function () { return template_builder_1.TemplateBuilder; } });
 var corporate_theme_1 = require("./templates/themes/corporate.theme");

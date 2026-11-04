@@ -1,28 +1,36 @@
-# This workflow will run tests using node and then publish a package to GitHub Packages when a release is created
-# For more information see: https://docs.github.com/en/actions/publishing-packages/publishing-nodejs-packages
-
-name: Node.js Package
+name: CI and npm publish
 
 on:
   push:
-    branches: [ "main" ]
-    paths:
-      - 'package.json' # pub só se package.json mudar
+    branches: [main]
+  pull_request:
+    branches: [main]
   release:
     types: [published]
 
+permissions:
+  contents: read
+
 jobs:
-  build:
+  quality:
+    name: Build, lint, and test
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: 20
+          cache: npm
       - run: npm ci
+      - run: npm run lint
+      - run: npm run typecheck
+      - run: npm test
+      - run: npm pack --dry-run
 
-  publish-npm:
-    needs: build
+  publish:
+    name: Publish to npm
+    if: github.event_name == 'release'
+    needs: quality
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -30,24 +38,9 @@ jobs:
         with:
           node-version: 20
           registry-url: https://registry.npmjs.org/
+          cache: npm
       - run: npm ci
-    
-      - name: Check version
-        id: check
-        run: |
-          VERSION=$(node -p "require('./package.json').version")
-          echo "version=$VERSION" >> $GITHUB_OUTPUT
-          
-          # Verifica se a versão já existe no npm
-          if npm view @zyther/tzmail@$VERSION version &> /dev/null; then
-            echo "Version $VERSION already exists, skipping publish"
-            echo "skip=true" >> $GITHUB_OUTPUT
-          else
-            echo "skip=false" >> $GITHUB_OUTPUT
-          fi
-      
-      - name: Publish to npm
-        if: steps.check.outputs.skip == 'false'
-        run: npm publish --access public
+      - run: npm run build
+      - run: npm publish --access public
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

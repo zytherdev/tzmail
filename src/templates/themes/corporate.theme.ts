@@ -53,7 +53,7 @@ export class CorporateTheme implements ITheme {
     xl: '32px'
   };
   
-  // cores adicionais 
+  // cores adicionais
   corporateColors = {
     gold: '#d4af37',
     silver: '#c0c0c0',

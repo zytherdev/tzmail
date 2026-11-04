@@ -37,67 +37,79 @@ exports.AttachmentService = void 0;
 const fs = __importStar(require("fs"));
 const path = __importStar(require("path"));
 /**
- * AttachmentService - Gerencia anexos para emails
- *
- * Métodos:
- * - addFromPath(filePath: string, options?: Partial<IAttachment>): Promise<IAttachment>
- *   Adiciona um anexo a partir de um caminho de arquivo.
- *
- * - addFromBuffer(buffer: Buffer, filename: string, options?: Partial<IAttachment>): Promise<IAttachment>
- *   Adiciona um anexo a partir de um buffer em memória.
- *
- * - addFromUrl(url: string, filename: string): Promise<IAttachment>
- *   Adiciona um anexo a partir de uma URL (ainda não implementado).
- *
- * Exemplo de uso:
- *
- * const attachmentService = new AttachmentService();
- * const attachment = await attachmentService.addFromPath('path/to/file.pdf');
- *
- * emailFactory.sendEmail({
- *   to: 'user@example.com',
- *   subject: 'Assunto do Email',
- *   template: myTemplate,
- *   attachments: [{...attachment}]
- * });
+ * Creates Nodemailer attachment descriptors. Path attachments remain paths so
+ * Nodemailer can stream large files instead of loading them into memory.
+ * If allowedRoot is omitted, callers are responsible for supplying trusted paths.
  */
 class AttachmentService {
-    /**
-     * addFromPath - Adiciona um anexo a partir de um caminho de arquivo
-     * @param filePath - Caminho do arquivo a ser anexado
-     * @param options - Opções adicionais para o anexo (filename, contentType, cid)
-     * @returns Promise<IAttachment> - Objeto de anexo formatado para Nodemailer
-     * @throws Error se o caminho não for um arquivo válido
-     */
-    async addFromPath(filePath, options) {
-        const stats = await fs.promises.stat(filePath);
-        if (!stats.isFile()) {
-            throw new Error(`Path is not a file: ${filePath}`);
+    options;
+    maxSizeBytes;
+    constructor(options = {}) {
+        this.options = options;
+        if (options.maxSizeBytes !== undefined &&
+            (!Number.isFinite(options.maxSizeBytes) || options.maxSizeBytes < 0)) {
+            throw new Error('maxSizeBytes must be a finite non-negative number');
         }
+        this.maxSizeBytes = options.maxSizeBytes;
+    }
+    /** Add an attachment as a file path, preserving streaming behavior. */
+    async addFromPath(filePath, options) {
+        if (typeof filePath !== 'string' || filePath.trim() === '') {
+            throw new Error('filePath must be a non-empty string');
+        }
+        let attachmentPath = filePath;
+        let stats;
+        if (this.options.allowedRoot !== undefined) {
+            const [rootRealPath, fileRealPath] = await Promise.all([
+                fs.promises.realpath(this.options.allowedRoot),
+                fs.promises.realpath(filePath)
+            ]);
+            const relativePath = path.relative(rootRealPath, fileRealPath);
+            if (relativePath === '..' || relativePath.startsWith(`..${path.sep}`) || path.isAbsolute(relativePath)) {
+                throw new Error('Attachment path is outside allowedRoot');
+            }
+            attachmentPath = fileRealPath;
+            stats = await fs.promises.stat(fileRealPath);
+        }
+        else {
+            stats = await fs.promises.stat(filePath);
+        }
+        if (!stats.isFile()) {
+            throw new Error('Attachment path is not a file');
+        }
+        this.assertSize(stats.size);
         return {
-            filename: (options === null || options === void 0 ? void 0 : options.filename) || path.basename(filePath),
-            path: filePath,
-            contentType: options === null || options === void 0 ? void 0 : options.contentType,
-            cid: options === null || options === void 0 ? void 0 : options.cid
+            filename: options?.filename || path.basename(filePath),
+            path: attachmentPath,
+            contentType: options?.contentType,
+            cid: options?.cid
         };
     }
     async addFromBuffer(buffer, filename, options) {
+        if (!Buffer.isBuffer(buffer)) {
+            throw new Error('buffer must be a Buffer');
+        }
+        if (typeof filename !== 'string' || filename.trim() === '') {
+            throw new Error('filename must be a non-empty string');
+        }
+        this.assertSize(buffer.length);
         return {
             filename,
             content: buffer,
-            contentType: options === null || options === void 0 ? void 0 : options.contentType,
-            cid: options === null || options === void 0 ? void 0 : options.cid
+            contentType: options?.contentType,
+            cid: options?.cid
         };
     }
-    /**
-     * addFromUrl - Adiciona um anexo a partir de uma URL (a ser implementado)
-     * @param url - URL do recurso a ser anexado
-     * @param filename - Nome do arquivo para o anexo
-     * @returns Promise<IAttachment> - Objeto de anexo formatado para Nodemailer
-     * @throws Error se o método não for implementado
-     */
+    /** URL attachments are deliberately not fetched by this service. */
     addFromUrl(url, filename) {
-        throw new Error('Method not implemented yet');
+        void url;
+        void filename;
+        throw new Error('addFromUrl is not supported; fetch and validate content in the application before adding an attachment');
+    }
+    assertSize(size) {
+        if (this.maxSizeBytes !== undefined && size > this.maxSizeBytes) {
+            throw new Error(`Attachment exceeds configured maxSizeBytes (${this.maxSizeBytes})`);
+        }
     }
 }
 exports.AttachmentService = AttachmentService;

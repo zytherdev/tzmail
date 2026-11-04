@@ -1,16 +1,36 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.TemplateBuilder = void 0;
+function escapeHtml(value) {
+    return String(value ?? '').replace(/[&<>"']/g, character => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[character]));
+}
+function safeHref(value, allowMailto = false) {
+    if (typeof value !== 'string' || !value.trim() || /[\u0000-\u0020"'<>\\]/.test(value))
+        throw new Error('Unsafe URL in template');
+    let url;
+    try {
+        url = new URL(value);
+    }
+    catch {
+        throw new Error('Template URLs must be absolute');
+    }
+    const schemes = allowMailto ? ['http:', 'https:', 'mailto:'] : ['http:', 'https:'];
+    if (!schemes.includes(url.protocol.toLowerCase()))
+        throw new Error('Unsafe URL scheme in template');
+    return escapeHtml(value);
+}
 class TemplateBuilder {
+    template = '';
+    theme;
+    config;
+    variant;
     constructor(theme, config, variant) {
-        this.template = '';
         this.theme = theme;
         this.config = config;
         this.variant = variant;
     }
     buildHeader(content) {
-        var _a;
-        if (!((_a = this.config.header) === null || _a === void 0 ? void 0 : _a.show))
+        if (!this.config.header?.show)
             return this;
         const colors = this.variant === 'light' ? this.theme.light : this.theme.dark;
         const isMonokai = this.theme.id === 'monokai';
@@ -18,7 +38,8 @@ class TemplateBuilder {
         const isCorporate = this.theme.id === 'corporate';
         const isMinimal = this.theme.id === 'minimal';
         let headerStyles = `
-      background-color: ${colors.background};
+      background-color: ${this.config.header?.backgroundColor || colors.background};
+      color: ${this.config.header?.textColor || colors.text};
       padding: ${this.theme.spacing.lg} ${this.theme.spacing.xl};
     `;
         // styles específicos para tema Corporate
@@ -75,7 +96,7 @@ class TemplateBuilder {
                     ${isCorporate ? 'font-family: serif;' : ''}
                     ${isMinimal ? 'font-weight: 300;' : ''}
                   ">
-                    ${content}
+                    ${escapeHtml(content)}
                   </td>
                 </tr>
               </table>
@@ -88,8 +109,7 @@ class TemplateBuilder {
         return this;
     }
     buildLogo() {
-        var _a;
-        const logo = (_a = this.config.header) === null || _a === void 0 ? void 0 : _a.logo;
+        const logo = this.config.header?.logo;
         if (!logo)
             return '';
         const colors = this.variant === 'light' ? this.theme.light : this.theme.dark;
@@ -136,7 +156,7 @@ class TemplateBuilder {
           background-clip: text;
         `;
             }
-            return `<div style="${textStyles}">${logo.text || 'Logo'}</div>`;
+            return `<div style="${textStyles}">${escapeHtml(logo.text || 'Logo')}</div>`;
         }
         if (logo.type === 'image') {
             let imageStyles = `
@@ -154,7 +174,7 @@ class TemplateBuilder {
           border-radius: ${this.theme.borderStyle.radius.small};
         `;
             }
-            return `<img src="${logo.imageUrl}" alt="${logo.alt || 'Logo'}" style="${imageStyles}" />`;
+            return `<img src="${safeHref(logo.imageUrl || '')}" alt="${escapeHtml(logo.alt || 'Logo')}" style="${imageStyles}" />`;
         }
         return '';
     }
@@ -251,8 +271,7 @@ class TemplateBuilder {
         // fmt minimalista - remove styles desnecessários
         return content
             .replace(/<h[1-6]>/g, (match) => {
-            var _a;
-            const level = ((_a = match.match(/h([1-6])/)) === null || _a === void 0 ? void 0 : _a[1]) || '2';
+            const level = match.match(/h([1-6])/)?.[1] || '2';
             const size = {
                 '1': '24px',
                 '2': '20px',
@@ -308,7 +327,10 @@ class TemplateBuilder {
         const isMonokai = this.theme.id === 'monokai';
         const isCorporate = this.theme.id === 'corporate';
         const isMinimal = this.theme.id === 'minimal';
-        let buttonColor = variant === 'primary' ? colors.primary : colors.secondary;
+        if (!['primary', 'secondary', 'success', 'danger'].includes(variant))
+            throw new Error('Invalid CTA variant');
+        const safeUrl = safeHref(url, true);
+        const buttonColor = variant === 'primary' ? colors.primary : variant === 'secondary' ? colors.secondary : variant === 'success' ? '#16a34a' : '#dc2626';
         let buttonStyles = `
       display: inline-block;
       padding: 12px 24px!important;
@@ -380,14 +402,14 @@ class TemplateBuilder {
             <table cellpadding="0" cellspacing="0" role="presentation">
               <tr>
                 <td style="${buttonStyles}">
-                  <a href="${url}" style="
+                  <a href="${safeUrl}" style="
                     text-decoration: none;
                     color: inherit;
                     display: inline-block;
                     font-weight: ${this.theme.typography.fontWeights.bold};
                     padding: 12px 24px;
                   ">
-                    ${text}
+                    ${escapeHtml(text)}
                   </a>
                 </td>
               </tr>
@@ -400,8 +422,7 @@ class TemplateBuilder {
         return this;
     }
     buildFooter() {
-        var _a, _b, _c;
-        if (!((_a = this.config.footer) === null || _a === void 0 ? void 0 : _a.show))
+        if (!this.config.footer?.show)
             return this;
         const colors = this.variant === 'light' ? this.theme.light : this.theme.dark;
         const isModern = this.theme.id === 'modern';
@@ -409,12 +430,12 @@ class TemplateBuilder {
         const isCorporate = this.theme.id === 'corporate';
         const isMinimal = this.theme.id === 'minimal';
         let footerStyles = `
-      background-color: ${colors.background};
+      background-color: ${this.config.footer?.backgroundColor || colors.background};
       border-top: 1px solid ${colors.border};
       padding: ${this.theme.spacing.lg} ${this.theme.spacing.xl}!important;
       text-align: center;
       font-size: ${this.theme.typography.fontSizes.small};
-      color: ${colors.textMuted};
+      color: ${this.config.footer?.textColor || colors.textMuted};
     `;
         // styles para tema Corporate
         if (isCorporate) {
@@ -457,7 +478,7 @@ class TemplateBuilder {
 
             ${socialLinks}
 
-            ${((_b = this.config.footer) === null || _b === void 0 ? void 0 : _b.copyrightText) ? `
+            ${this.config.footer?.copyrightText ? `
               <table width="100%" cellpadding="0" cellspacing="0" role="presentation">
                 <tr>
                   <td style="
@@ -467,13 +488,13 @@ class TemplateBuilder {
                     color: ${colors.textMuted};
                     text-align: center;
                   ">
-                    ${this.config.footer.copyrightText}
+                    ${escapeHtml(this.config.footer.copyrightText)}
                   </td>
                 </tr>
               </table>
             ` : ''}
 
-            ${((_c = this.config.footer) === null || _c === void 0 ? void 0 : _c.unsubscribeText) ? `
+            ${this.config.footer?.unsubscribeText ? `
               <table width="100%" cellpadding="0" cellspacing="0" role="presentation">
                 <tr>
                   <td style="
@@ -482,12 +503,9 @@ class TemplateBuilder {
                     font-family: Arial, sans-serif;
                     font-size: 12px;
                   ">
-                    <a href="#" style="
-                      color: ${colors.textMuted};
-                      text-decoration: underline;
-                    ">
-                      ${this.config.footer.unsubscribeText}
-                    </a>
+                    ${this.config.footer.unsubscribeUrl
+            ? `<a href="${safeHref(this.config.footer.unsubscribeUrl, true)}" style="color: ${colors.textMuted}; text-decoration: underline;">${escapeHtml(this.config.footer.unsubscribeText)}</a>`
+            : escapeHtml(this.config.footer.unsubscribeText)}
                   </td>
                 </tr>
               </table>
@@ -500,8 +518,7 @@ class TemplateBuilder {
         return this;
     }
     buildFooterLinks() {
-        var _a, _b;
-        if (!((_b = (_a = this.config.footer) === null || _a === void 0 ? void 0 : _a.links) === null || _b === void 0 ? void 0 : _b.length))
+        if (!this.config.footer?.links?.length)
             return '';
         const colors = this.variant === 'light' ? this.theme.light : this.theme.dark;
         const isModern = this.theme.id === 'modern';
@@ -547,8 +564,8 @@ class TemplateBuilder {
               <tr>
                 ${this.config.footer.links.map(link => `
                   <td style="padding: 0 8px;">
-                    <a href="${link.url}" style="${linkStyles}">
-                      ${link.text}
+                    <a href="${safeHref(link.url, true)}" style="${linkStyles}">
+                      ${escapeHtml(link.text)}
                     </a>
                   </td>
                 `).join('')}
@@ -561,8 +578,7 @@ class TemplateBuilder {
     `;
     }
     buildSocialLinks() {
-        var _a, _b;
-        if (!((_b = (_a = this.config.footer) === null || _a === void 0 ? void 0 : _a.socialLinks) === null || _b === void 0 ? void 0 : _b.length))
+        if (!this.config.footer?.socialLinks?.length)
             return '';
         return `
       <table width="100%" cellpadding="0" cellspacing="0" role="presentation">
@@ -573,12 +589,12 @@ class TemplateBuilder {
               <tr>
                 ${this.config.footer.socialLinks.map(link => `
                   <td style="padding: 0 6px;">
-                    <a href="${link.url}" target="_blank">
+                    <a href="${safeHref(link.url)}" target="_blank" rel="noopener noreferrer">
                       <img 
                         src="${this.getSocialIcon(link.platform)}"
                         width="20"
                         height="20"
-                        alt="${link.platform}"
+                        alt="${escapeHtml(link.platform)}"
                         style="display: block; border: 0;"
                       />
                     </a>
@@ -595,6 +611,7 @@ class TemplateBuilder {
     getSocialIcon(platform) {
         const icons = {
             facebook: 'https://cdn.simpleicons.org/facebook/1877F2',
+            linkedin: 'https://cdn.simpleicons.org/linkedin/0A66C2',
             twitter: 'https://cdn.simpleicons.org/x/1DA1F2',
             github: 'https://cdn.simpleicons.org/github/000000',
             instagram: 'https://cdn.simpleicons.org/instagram/E4405F',
@@ -617,7 +634,7 @@ class TemplateBuilder {
         const isMonokai = this.theme.id === 'monokai';
         const isCorporate = this.theme.id === 'corporate';
         const isMinimal = this.theme.id === 'minimal';
-        let wrapperStyles = 'margin: 0; padding: 0;';
+        const wrapperStyles = 'margin: 0; padding: 0;';
         let containerStyles = `max-width: ${isMinimal ? '640px' : '600px'}; margin: 0 auto;`;
         if (isModern) {
             containerStyles += `

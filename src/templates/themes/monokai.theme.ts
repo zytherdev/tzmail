@@ -53,7 +53,7 @@ export class MonokaiTheme implements ITheme {
     xl: '32px'
   };
   
-  // cores adicionais 
+  // cores adicionais
   codeHighlight = {
     comment: '#75715e',
     keyword: '#f92672',

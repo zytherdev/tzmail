@@ -13,7 +13,7 @@ export declare class TemplateBuilder {
     private formatMinimalContent;
     private highlightCode;
     private applySyntaxHighlighting;
-    buildButton(text: string, url: string, variant?: 'primary' | 'secondary'): this;
+    buildButton(text: string, url: string, variant?: 'primary' | 'secondary' | 'success' | 'danger'): this;
     buildFooter(): this;
     private buildFooterLinks;
     private buildSocialLinks;
