@@ -307,7 +307,7 @@ Open the standalone [interactive theme gallery](examples/theme-gallery.html) in 
 
 Each built-in `ITheme` now includes an `emailStyles` profile for desktop width, container surfaces, header/body/footer accents, spacing, and solid or outline CTAs. Color accents are palette references, so the same profile adapts to light and dark variants. Custom `ITheme` implementations can omit `emailStyles` and receive conservative email-safe defaults. The renderer avoids CSS gradients, hover-only behavior, animation, and glass effects that are unreliable in email clients.
 
-When theme-selected logo text, outline CTA text, or default footer copy would have insufficient contrast against its surface, the renderer uses a readable text-color fallback while preserving the theme accent on borders and fills. Explicit caller-supplied header/footer text colors remain respected.
+Theme-selected or caller-supplied logo, header, body, and footer text colors are checked against their effective backgrounds. If a requested foreground would be unreadable, the renderer substitutes a WCAG AA-safe fallback while preserving the theme accent on borders and fills.
 
 Body copy and its CTA share the configured `body.alignment` (`left`, `center`, or `right`); `body.backgroundColor` and `body.textColor` can override the theme's body palette. Footer navigation and unsubscribe links have no underline by default. Set `linkDecoration: 'underline'` when underlined links are preferred; the setting applies consistently to both.
 

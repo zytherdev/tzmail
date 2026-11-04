@@ -1,6 +1,7 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.TemplateBuilder = void 0;
+const color_accessibility_1 = require("./color-accessibility");
 function escapeHtml(value) {
     return String(value ?? '').replace(/[&<>"']/g, character => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[character]));
 }
@@ -34,32 +35,6 @@ function borderFor(token, width, colors) {
     const color = colorFor(token, colors);
     return !color || !width || Number.parseFloat(width) <= 0 ? 'none' : `${width} solid ${color}`;
 }
-function relativeLuminance(color) {
-    const hex = color.replace(/^#/, '');
-    const normalized = hex.length === 3 ? hex.split('').map((channel) => channel + channel).join('') : hex;
-    if (!/^[\da-f]{6}$/i.test(normalized))
-        return undefined;
-    const channels = [0, 2, 4].map((offset) => Number.parseInt(normalized.slice(offset, offset + 2), 16) / 255);
-    return channels.map((channel) => channel <= 0.04045 ? channel / 12.92 : ((channel + 0.055) / 1.055) ** 2.4)
-        .reduce((sum, channel, index) => sum + channel * [0.2126, 0.7152, 0.0722][index], 0);
-}
-function contrastRatio(foreground, background) {
-    const foregroundLuminance = relativeLuminance(foreground);
-    const backgroundLuminance = relativeLuminance(background);
-    if (foregroundLuminance === undefined || backgroundLuminance === undefined)
-        return 0;
-    const lighter = Math.max(foregroundLuminance, backgroundLuminance);
-    const darker = Math.min(foregroundLuminance, backgroundLuminance);
-    return (lighter + 0.05) / (darker + 0.05);
-}
-function accessibleTextColor(background) {
-    const luminance = relativeLuminance(background);
-    if (luminance === undefined)
-        return '#ffffff';
-    const whiteContrast = 1.05 / (luminance + 0.05);
-    const blackContrast = (luminance + 0.05) / 0.05;
-    return whiteContrast >= blackContrast ? '#ffffff' : '#000000';
-}
 class TemplateBuilder {
     template = '';
     theme;
@@ -87,9 +62,10 @@ class TemplateBuilder {
         const styles = this.emailStyles.header;
         const headerBorder = borderFor(styles.accentColor, styles.accentWidth, colors);
         const headerBackground = this.config.header?.backgroundColor || colors.background;
+        const headerTextColor = (0, color_accessibility_1.readableTextColor)(this.config.header?.textColor || colors.text, headerBackground, colors.text);
         const headerStyles = `
       background-color: ${headerBackground};
-      color: ${this.config.header?.textColor || colors.text};
+      color: ${headerTextColor};
       padding: ${this.theme.spacing.lg} ${styles.horizontalPadding};
       border-bottom: ${headerBorder};
       font-family: ${this.theme.typography.fontFamily};
@@ -121,9 +97,8 @@ class TemplateBuilder {
         const styles = this.emailStyles.header;
         if (logo.type === 'text') {
             const logoBackground = this.config.header?.backgroundColor || colors.background;
-            const preferredColor = colors[styles.logoColor];
-            const logoColor = this.config.header?.textColor || (contrastRatio(preferredColor, logoBackground) >= 4.5 ? preferredColor
-                : contrastRatio(colors.text, logoBackground) >= 4.5 ? colors.text : accessibleTextColor(logoBackground));
+            const preferredColor = this.config.header?.textColor || colors[styles.logoColor];
+            const logoColor = (0, color_accessibility_1.readableTextColor)(preferredColor, logoBackground, colors.text);
             const textStyles = `
         display: inline-block;
         max-width: 100%;
@@ -147,7 +122,7 @@ class TemplateBuilder {
         const colors = this.variant === 'light' ? this.theme.light : this.theme.dark;
         const styles = this.emailStyles.body;
         const bodyBackground = this.config.body?.backgroundColor || colors.background;
-        const bodyTextColor = this.config.body?.textColor || colors.text;
+        const bodyTextColor = (0, color_accessibility_1.readableTextColor)(this.config.body?.textColor || colors.text, bodyBackground, colors.text);
         const accentBorder = borderFor(styles.accentColor, styles.accentWidth, colors);
         let processedContent = content;
         if (this.theme.id === 'corporate')
@@ -178,10 +153,10 @@ class TemplateBuilder {
     }
     formatCorporateContent(content, background, textColor) {
         const colors = this.variant === 'light' ? this.theme.light : this.theme.dark;
-        const quoteColor = contrastRatio(colors.textMuted, background) >= 4.5 ? colors.textMuted : textColor;
+        const quoteColor = (0, color_accessibility_1.contrastRatio)(colors.textMuted, background) >= 4.5 ? colors.textMuted : textColor;
         return content
             .replace(/<blockquote(?:\s[^>]*)?>([\s\S]*?)<\/blockquote>/gi, (_match, quote) => `<blockquote style="border-left:3px solid ${colors.primary};margin:${this.theme.spacing.md} 0;padding:${this.theme.spacing.md};font-style:italic;color:${quoteColor};">${quote}</blockquote>`)
-            .replace(/<highlight(?:\s[^>]*)?>([\s\S]*?)<\/highlight>/gi, (_match, text) => `<span style="background-color:${colors.border};padding:0 ${this.theme.spacing.xs};font-weight:bold;color:${colors.text};">${text}</span>`);
+            .replace(/<highlight(?:\s[^>]*)?>([\s\S]*?)<\/highlight>/gi, (_match, text) => `<span style="background-color:${colors.border};padding:0 ${this.theme.spacing.xs};font-weight:bold;color:${(0, color_accessibility_1.readableTextColor)(colors.text, colors.border, textColor)};">${text}</span>`);
     }
     formatMinimalContent(content, textColor) {
         const headingSizes = { '1': '24px', '2': '20px', '3': '18px', '4': '16px', '5': '14px', '6': '13px' };
@@ -193,7 +168,8 @@ class TemplateBuilder {
         const colors = this.variant === 'light' ? this.theme.light : this.theme.dark;
         const monokai = this.theme;
         const radius = this.emailStyles.body.borderRadius;
-        return content.replace(/<code(?:\s[^>]*)?>([\s\S]*?)<\/code>/gi, (_match, code) => `<pre style="margin:${this.theme.spacing.md} 0;background-color:${background};color:${textColor};padding:${this.theme.spacing.md};border:1px solid ${colors.border};border-radius:${radius};font-family:${this.theme.typography.fontFamily};font-size:13px;line-height:1.5;white-space:pre-wrap;word-wrap:break-word;">${this.applySyntaxHighlighting(code, monokai, background, textColor)}</pre>`);
+        const codeStyles = `margin:${this.theme.spacing.md} 0;background-color:${background};color:${textColor};padding:${this.theme.spacing.md};border:1px solid ${colors.border};border-radius:${radius};font-family:${this.theme.typography.fontFamily};font-size:13px;line-height:1.5;white-space:pre-wrap;word-wrap:break-word;`;
+        return content.replace(/<code(?:\s[^>]*)?>([\s\S]*?)<\/code>/gi, (_match, code) => `<pre style="${escapeHtml(codeStyles)}">${this.applySyntaxHighlighting(code, monokai, background, textColor)}</pre>`);
     }
     applySyntaxHighlighting(code, monokai, background, textColor) {
         const keywords = new Set(['function', 'const', 'let', 'var', 'if', 'else', 'return', 'import', 'from']);
@@ -207,7 +183,7 @@ class TemplateBuilder {
             const preferredColor = token.startsWith('"') || token.startsWith("'") ? monokai.codeHighlight.string
                 : /^\d+$/.test(token) ? monokai.codeHighlight.number
                     : keywords.has(token) ? monokai.codeHighlight.keyword : monokai.codeHighlight.function;
-            const color = contrastRatio(preferredColor, background) >= 4.5 ? preferredColor : textColor;
+            const color = (0, color_accessibility_1.contrastRatio)(preferredColor, background) >= 4.5 ? preferredColor : textColor;
             result += `<span style="color:${color};">${escapeHtml(token)}</span>`;
             lastIndex = index + token.length;
         }
@@ -223,8 +199,8 @@ class TemplateBuilder {
         const isOutline = button.appearance === 'outline';
         const alignment = this.config.body?.alignment || 'left';
         const buttonTextColor = isOutline
-            ? contrastRatio(buttonColor, colors.background) >= 4.5 ? buttonColor : colors.text
-            : accessibleTextColor(buttonColor);
+            ? (0, color_accessibility_1.contrastRatio)(buttonColor, colors.background) >= 4.5 ? buttonColor : colors.text
+            : (0, color_accessibility_1.accessibleTextColor)(buttonColor);
         const buttonStyles = `
       display: inline-block;
       box-sizing: border-box;
@@ -241,7 +217,7 @@ class TemplateBuilder {
       line-height: 1.3;
       letter-spacing: ${button.letterSpacing || 'normal'};
       text-transform: ${button.textTransform || 'none'};
-      text-decoration: none;
+      text-decoration: none !important;
     `;
         this.template += `
       <table width="100%" class="button-wrap" cellpadding="0" cellspacing="0" role="presentation" style="width:100%;">
@@ -261,8 +237,10 @@ class TemplateBuilder {
         const styles = this.emailStyles.footer;
         const footerBorder = borderFor(styles.accentColor, styles.accentWidth, colors);
         const footerBackground = this.config.footer?.backgroundColor || colors.background;
-        const footerTextColor = this.config.footer?.textColor || (contrastRatio(colors.textMuted, footerBackground) >= 4.5 ? colors.textMuted : colors.text);
-        const linkDecoration = this.config.linkDecoration || 'none';
+        const defaultFooterTextColor = (0, color_accessibility_1.contrastRatio)(colors.textMuted, footerBackground) >= 4.5 ? colors.textMuted : colors.text;
+        const footerTextColor = (0, color_accessibility_1.readableTextColor)(this.config.footer?.textColor || defaultFooterTextColor, footerBackground, colors.text);
+        const copyrightStyles = escapeHtml(`padding-top:${this.theme.spacing.md};font-family:${this.theme.typography.fontFamily};font-size:${this.theme.typography.fontSizes.small};line-height:1.5;color:${footerTextColor};text-align:center;`);
+        const unsubscribeCellStyles = escapeHtml(`padding-top:${this.theme.spacing.sm};text-align:center;font-family:${this.theme.typography.fontFamily};font-size:${this.theme.typography.fontSizes.small};line-height:1.5;`);
         const footerStyles = `
       background-color: ${footerBackground};
       border-top: ${footerBorder};
@@ -282,16 +260,16 @@ class TemplateBuilder {
           ${socialLinks}
           ${this.config.footer?.copyrightText ? `
             <table width="100%" cellpadding="0" cellspacing="0" role="presentation">
-              <tr><td style="padding-top:${this.theme.spacing.md};font-family:${this.theme.typography.fontFamily};font-size:${this.theme.typography.fontSizes.small};line-height:1.5;color:${footerTextColor};text-align:center;">
+              <tr><td style="${copyrightStyles}">
                 ${escapeHtml(this.config.footer.copyrightText)}
               </td></tr>
             </table>
           ` : ''}
           ${this.config.footer?.unsubscribeText ? `
             <table width="100%" cellpadding="0" cellspacing="0" role="presentation">
-              <tr><td style="padding-top:${this.theme.spacing.sm};text-align:center;font-family:${this.theme.typography.fontFamily};font-size:${this.theme.typography.fontSizes.small};line-height:1.5;">
+              <tr><td style="${unsubscribeCellStyles}">
                 ${this.config.footer.unsubscribeUrl
-            ? `<a href="${safeHref(this.config.footer.unsubscribeUrl, true)}" style="color:${footerTextColor};text-decoration:${linkDecoration};">${escapeHtml(this.config.footer.unsubscribeText)}</a>`
+            ? `<a href="${safeHref(this.config.footer.unsubscribeUrl, true)}" style="color:${footerTextColor};${this.linkDecorationStyle()}">${escapeHtml(this.config.footer.unsubscribeText)}</a>`
             : escapeHtml(this.config.footer.unsubscribeText)}
               </td></tr>
             </table>
@@ -306,9 +284,9 @@ class TemplateBuilder {
             return '';
         const colors = this.variant === 'light' ? this.theme.light : this.theme.dark;
         const footerBackground = this.config.footer.backgroundColor || colors.background;
-        const linkColor = contrastRatio(colors.textMuted, footerBackground) >= 4.5 ? colors.textMuted : colors.text;
-        const decoration = this.config.linkDecoration || 'none';
-        const linkStyles = `color:${linkColor};text-decoration:${decoration};font-family:${this.theme.typography.fontFamily};font-size:${this.theme.typography.fontSizes.small};line-height:1.5;`;
+        const preferredLinkColor = (0, color_accessibility_1.contrastRatio)(colors.textMuted, footerBackground) >= 4.5 ? colors.textMuted : colors.text;
+        const linkColor = (0, color_accessibility_1.readableTextColor)(this.config.footer.textColor || preferredLinkColor, footerBackground, colors.text);
+        const linkStyles = `color:${linkColor};${this.linkDecorationStyle()}font-family:${this.theme.typography.fontFamily};font-size:${this.theme.typography.fontSizes.small};line-height:1.5;`;
         return `
       <table width="100%" cellpadding="0" cellspacing="0" role="presentation" style="width:100%;">
         <tr><td style="padding-bottom:${this.theme.spacing.md};" align="center">
@@ -323,6 +301,10 @@ class TemplateBuilder {
       </table>
     `;
     }
+    linkDecorationStyle() {
+        const decoration = this.config.linkDecoration === 'underline' ? 'underline' : 'none';
+        return `text-decoration:${decoration} !important;`;
+    }
     buildSocialLinks() {
         if (!this.config.footer?.socialLinks?.length)
             return '';
@@ -335,7 +317,7 @@ class TemplateBuilder {
               <tr>
                 ${this.config.footer.socialLinks.map(link => `
                   <td style="padding: 0 6px;">
-                    <a href="${safeHref(link.url)}" target="_blank" rel="noopener noreferrer">
+                    <a href="${safeHref(link.url)}" target="_blank" rel="noopener noreferrer" style="${this.linkDecorationStyle()}">
                       <img 
                         src="${this.getSocialIcon(link.platform)}"
                         width="20"

@@ -18,6 +18,7 @@ export declare class TemplateBuilder {
     buildButton(text: string, url: string, variant?: 'primary' | 'secondary' | 'success' | 'danger'): this;
     buildFooter(): this;
     private buildFooterLinks;
+    private linkDecorationStyle;
     private buildSocialLinks;
     private getSocialIcon;
     build(): string;

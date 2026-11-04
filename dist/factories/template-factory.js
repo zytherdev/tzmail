@@ -18,6 +18,7 @@ const neobrutal_theme_1 = require("../templates/themes/neobrutal.theme");
 const glass_theme_1 = require("../templates/themes/glass.theme");
 const midnight_theme_1 = require("../templates/themes/midnight.theme");
 const template_builder_1 = require("../templates/base/template-builder");
+const color_accessibility_1 = require("../templates/base/color-accessibility");
 const SAFE_COLOR = /^(#[\da-f]{3,8}|[a-z]{1,24}|(?:rgb|rgba|hsl|hsla)\([\d.%\s,+/-]+\))$/i;
 const SAFE_LANGUAGE_TAG = /^[A-Za-z]{2,8}(?:-[A-Za-z0-9]{1,8})*$/;
 const SAFE_NAMED_COLORS = new Set(('transparent inherit currentcolor aliceblue antiquewhite aqua aquamarine azure beige bisque black blanchedalmond blue blueviolet brown burlywood cadetblue chartreuse chocolate coral cornflowerblue cornsilk crimson cyan darkblue darkcyan darkgoldenrod darkgray darkgrey darkgreen darkkhaki darkmagenta darkolivegreen darkorange darkorchid darkred darksalmon darkseagreen darkslateblue darkslategray darkslategrey darkturquoise darkviolet deeppink deepskyblue dimgray dimgrey dodgerblue firebrick floralwhite forestgreen fuchsia gainsboro ghostwhite gold goldenrod gray grey green greenyellow honeydew hotpink indianred indigo ivory khaki lavender lavenderblush lawngreen lemonchiffon lightblue lightcoral lightcyan lightgoldenrodyellow lightgray lightgrey lightgreen lightpink lightsalmon lightseagreen lightskyblue lightslategray lightslategrey lightsteelblue lightyellow lime limegreen linen magenta maroon mediumaquamarine mediumblue mediumorchid mediumpurple mediumseagreen mediumslateblue mediumspringgreen mediumturquoise mediumvioletred midnightblue mintcream mistyrose moccasin navajowhite navy oldlace olive olivedrab orange orangered orchid palegoldenrod palegreen paleturquoise palevioletred papayawhip peachpuff peru pink plum powderblue purple rebeccapurple red rosybrown royalblue saddlebrown salmon sandybrown seagreen seashell sienna silver skyblue slateblue slategray slategrey snow springgreen steelblue tan teal thistle tomato turquoise violet wheat white whitesmoke yellow yellowgreen').split(' '));
@@ -147,7 +148,8 @@ class TemplateFactory {
                 if (!Number.isFinite(fontSize) || fontSize < 8 || fontSize > 72)
                     throw new Error('Invalid body font size');
                 const background = cssColor(body.backgroundColor, theme[variant].background);
-                const textColor = cssColor(body.textColor, theme[variant].text);
+                const requestedTextColor = cssColor(body.textColor, theme[variant].text);
+                const textColor = (0, color_accessibility_1.readableTextColor)(requestedTextColor, background, theme[variant].text);
                 cssColor(renderConfig.header?.backgroundColor, 'transparent');
                 cssColor(renderConfig.header?.textColor, 'inherit');
                 cssColor(renderConfig.footer?.backgroundColor, 'transparent');

@@ -1,5 +1,7 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
+const fs = require('node:fs');
+const path = require('node:path');
 const { TemplateService } = require('../dist/services/template.service.js');
 const { TemplateFactory } = require('../dist/factories/template-factory.js');
 const { ThemeType } = require('../dist/core/enums/theme.enum.js');
@@ -148,6 +150,53 @@ test('body background and text color overrides are rendered explicitly', async t
   }), {});
   assert.match(html, /bgcolor="#101820" style="width:100%;background-color:#101820;"/);
   assert.match(html, /color: #ffffff;/);
+});
+
+test('dark footer and body overrides preserve readable contrast and valid style attributes', async t => {
+  const service = new TemplateService();
+  t.after(() => service.dispose());
+  const html = await service.previewTemplate(ThemeType.MINIMAL, 'dark', plainConfig({
+    body: { backgroundColor: '#101010', textColor: '#000000', title: 'Readable title', message: 'Readable body' },
+    footer: {
+      show: true,
+      backgroundColor: '#101010',
+      textColor: '#000000',
+      links: [{ text: 'Privacy', url: 'https://example.com/privacy' }],
+      copyrightText: 'Copyright',
+      unsubscribeText: 'Unsubscribe',
+      unsubscribeUrl: 'https://example.com/unsubscribe'
+    }
+  }), {});
+  const footerStyle = html.match(/class="email-footer-cell"[^>]*style="([^"]+)"/)?.[1] || '';
+  assert.match(footerStyle, /color: #ffffff;/);
+  assert.match(html, /color:\s*#ffffff;[^>]*>Readable title/);
+  const copyrightStyle = html.match(/<td style="([^"]+)">\s*Copyright/)?.[1] || '';
+  assert.match(copyrightStyle, /color:#ffffff;/);
+  const footerAnchors = [...html.matchAll(/<a\b[^>]*style="([^"]+)"[^>]*>/g)].map(match => match[1]);
+  assert.equal(footerAnchors.length, 2);
+  assert.ok(footerAnchors.every(style => /color:#ffffff;/.test(style) && /text-decoration:none !important/.test(style)));
+  assert.doesNotMatch(html, /style="[^"]*font-family: "[^"]*"/);
+  assert.match(html, /text-decoration:none !important/);
+  assert.doesNotMatch(html, /text-decoration:underline/);
+});
+
+test('committed gallery embeds 30 centered previews with synchronized CTA alignment', () => {
+  const gallery = fs.readFileSync(path.resolve(__dirname, '../examples/theme-gallery.html'), 'utf8');
+  const data = gallery.match(/<script id="gallery-data" type="application\/json">([\s\S]*?)<\/script>/);
+  assert.ok(data, 'gallery should contain generated preview data');
+  const themes = JSON.parse(data[1]);
+  assert.equal(themes.length, 15);
+  for (const theme of themes) {
+    for (const mode of ['light', 'dark']) {
+      const preview = theme.previews[mode];
+      assert.match(preview, /<td align="center" style="padding: 0; text-align: center;/, `${theme.name}/${mode} body copy should be centered`);
+      assert.match(preview, /<table class="button" align="center"/, `${theme.name}/${mode} CTA should be centered`);
+      const links = [...preview.matchAll(/<a\b[^>]*style="([^"]+)"[^>]*>/g)].map(match => match[1]);
+      assert.ok(links.length >= 4, `${theme.name}/${mode} should include the sample CTA and footer links`);
+      assert.ok(links.every(style => /text-decoration:\s*none !important/.test(style)), `${theme.name}/${mode} should remove link underlines`);
+      assert.doesNotMatch(preview, /style="[^"]*font-family: "[^"]*"/, `${theme.name}/${mode} must not contain broken quoted font-family attributes`);
+    }
+  }
 });
 
 test('renders safe localized RTL output and escaped, interpolated inbox preheaders', async t => {

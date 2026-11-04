@@ -17,6 +17,7 @@ import { NeoBrutalTheme } from '../templates/themes/neobrutal.theme';
 import { GlassTheme } from '../templates/themes/glass.theme';
 import { MidnightTheme } from '../templates/themes/midnight.theme';
 import { TemplateBuilder } from '../templates/base/template-builder';
+import { readableTextColor } from '../templates/base/color-accessibility';
 
 const SAFE_COLOR = /^(#[\da-f]{3,8}|[a-z]{1,24}|(?:rgb|rgba|hsl|hsla)\([\d.%\s,+/-]+\))$/i;
 const SAFE_LANGUAGE_TAG = /^[A-Za-z]{2,8}(?:-[A-Za-z0-9]{1,8})*$/;
@@ -141,7 +142,8 @@ export class TemplateFactory {
         const fontSize = body.fontSize ?? 14;
         if (!Number.isFinite(fontSize) || fontSize < 8 || fontSize > 72) throw new Error('Invalid body font size');
         const background = cssColor(body.backgroundColor, theme[variant].background);
-        const textColor = cssColor(body.textColor, theme[variant].text);
+        const requestedTextColor = cssColor(body.textColor, theme[variant].text);
+        const textColor = readableTextColor(requestedTextColor, background, theme[variant].text);
         cssColor(renderConfig.header?.backgroundColor, 'transparent');
         cssColor(renderConfig.header?.textColor, 'inherit');
         cssColor(renderConfig.footer?.backgroundColor, 'transparent');

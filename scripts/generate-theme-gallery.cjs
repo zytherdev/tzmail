@@ -9,6 +9,7 @@ const config = {
   preheader: 'A quick look at your latest Northstar update.',
   header: { show: true, logo: { type: 'text', text: 'northstar' } },
   body: {
+    alignment: 'center',
     title: 'A clearer view of what matters.',
     message: 'Your latest update is ready. Explore the highlights, then pick up right where you left off.',
     buttonText: 'View your update',
