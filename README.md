@@ -303,6 +303,8 @@ The library includes 15 themes, each with `light` and `dark` variants. The origi
 
 All themes use fluid, table-based email markup. On screens up to 600px wide, calls to action expand to the available width and footer links stack vertically. Use `TemplateFactory.listThemes()` to enumerate available themes and `TemplateFactory.getThemeInfo(theme)` to read each theme's description and features.
 
+Open the standalone [interactive theme gallery](examples/theme-gallery.html) in a browser to compare all 15 themes, switch between light and dark variants, search by theme name, and inspect expanded previews. It embeds sample emails rendered by the current `TemplateFactory` and requires no server or external assets.
+
 ```typescript
 const service = mailer.getTemplateService();
 
