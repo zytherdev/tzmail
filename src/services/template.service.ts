@@ -260,12 +260,17 @@ export class TemplateService {
         if (config.header.logo.type === 'image' && !hasTemplatePlaceholder(config.header.logo.imageUrl)) fail(() => assertSafeUrl(config.header!.logo!.imageUrl, false, 'header.logo.imageUrl'));
         if (config.header.logo.type === 'text' && typeof config.header.logo.text !== 'string') errors.push('header.logo.text must be a string');
       }
+      if (config.header.heroImageUrl !== undefined && !hasTemplatePlaceholder(config.header.heroImageUrl)) {
+        fail(() => assertSafeUrl(config.header!.heroImageUrl, false, 'header.heroImageUrl'));
+      }
+      if (config.header.heroAlt !== undefined && typeof config.header.heroAlt !== 'string') errors.push('header.heroAlt must be a string');
       if (config.header.backgroundColor !== undefined && !isSafeColor(config.header.backgroundColor)) errors.push('Invalid header.backgroundColor');
       if (config.header.textColor !== undefined && !isSafeColor(config.header.textColor)) errors.push('Invalid header.textColor');
     }
     const body = config.body;
     if (body) {
       enumValue(body.alignment, ['left', 'center', 'right'], 'body.alignment');
+      enumValue(body.buttonAlignment, ['left', 'center', 'right'], 'body.buttonAlignment');
       enumValue(body.buttonVariant, ['primary', 'secondary', 'success', 'danger'], 'body.buttonVariant');
       if (body.fontSize !== undefined && (!Number.isFinite(body.fontSize) || body.fontSize < 8 || body.fontSize > 72)) errors.push('body.fontSize must be between 8 and 72');
       for (const key of ['backgroundColor', 'textColor'] as const) {
@@ -274,7 +279,7 @@ export class TemplateService {
       }
       const buttonUrl = body.buttonUrl;
       if (buttonUrl !== undefined && !hasTemplatePlaceholder(buttonUrl)) fail(() => assertSafeUrl(buttonUrl, true, 'body.buttonUrl'));
-      for (const key of ['title', 'message', 'content', 'buttonText'] as const) {
+      for (const key of ['title', 'message', 'content', 'html', 'buttonText'] as const) {
         if (body[key] !== undefined && typeof body[key] !== 'string') errors.push(`body.${key} must be a string`);
       }
     }

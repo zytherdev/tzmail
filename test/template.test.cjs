@@ -46,13 +46,13 @@ test('preview renders the captured config, escapes text, and does not trust call
   assert.doesNotMatch(html, /injected config|forged/);
 });
 
-test('all 15 themes render in light and dark mode with responsive email markup', async t => {
+test('all 34 themes render in light and dark mode with responsive email markup', async t => {
   const service = new TemplateService();
   t.after(() => service.dispose());
   const expectedThemes = [
     'system', 'monokai', 'modern', 'corporate', 'minimal',
     'aurora', 'ocean', 'sunset', 'lavender', 'forest',
-    'editorial', 'pastel', 'neobrutal', 'glass', 'midnight'
+    'editorial', 'pastel', 'neobrutal', 'glass', 'midnight', 'saas', 'citrus', 'berry', 'paper', 'neon', 'alpine', 'orbit', 'linen', 'bloom', 'slate', 'marigold', 'inkwell', 'tide', 'clay', 'cloud', 'campus', 'noir', 'mint', 'saffron'
   ];
   assert.deepEqual(TemplateFactory.listThemes().map(String), expectedThemes);
 
@@ -142,6 +142,17 @@ test('body copy and CTA share the requested left/center/right alignment', async 
   }
 });
 
+test('CTA alignment can differ from body alignment', async t => {
+  const service = new TemplateService();
+  t.after(() => service.dispose());
+  const html = await service.previewTemplate(ThemeType.PAPER, 'light', plainConfig({
+    body: { alignment: 'left', buttonAlignment: 'right', title: 'Read this', message: 'The button is intentionally on the right.', buttonText: 'Continue', buttonUrl: 'https://example.com/continue' }
+  }), {});
+  assert.match(html, /<td align="left" style="padding: 0; text-align: left;/);
+  assert.match(html, /<table class="button" align="right"/);
+  assert.match(html, /<tr><td align="right"><a class="button-link"/);
+});
+
 test('body background and text color overrides are rendered explicitly', async t => {
   const service = new TemplateService();
   t.after(() => service.dispose());
@@ -180,23 +191,26 @@ test('dark footer and body overrides preserve readable contrast and valid style 
   assert.doesNotMatch(html, /text-decoration:underline/);
 });
 
-test('committed gallery embeds 30 centered previews with synchronized CTA alignment', () => {
+test('committed gallery embeds 68 previews with varied headers and CTA alignment', () => {
   const gallery = fs.readFileSync(path.resolve(__dirname, '../examples/theme-gallery.html'), 'utf8');
   const data = gallery.match(/<script id="gallery-data" type="application\/json">([\s\S]*?)<\/script>/);
   assert.ok(data, 'gallery should contain generated preview data');
   const themes = JSON.parse(data[1]);
-  assert.equal(themes.length, 15);
+  assert.equal(themes.length, 34);
   for (const theme of themes) {
     for (const mode of ['light', 'dark']) {
       const preview = theme.previews[mode];
-      assert.match(preview, /<td align="center" style="padding: 0; text-align: center;/, `${theme.name}/${mode} body copy should be centered`);
-      assert.match(preview, /<table class="button" align="center"/, `${theme.name}/${mode} CTA should be centered`);
+      assert.match(preview, new RegExp(`<td align="${theme.alignment}" style="padding: 0; text-align: ${theme.alignment};`), `${theme.name}/${mode} body copy should be ${theme.alignment}`);
+      assert.match(preview, new RegExp(`<table class="button" align="${theme.alignment}"`), `${theme.name}/${mode} CTA should follow the body alignment`);
       const links = [...preview.matchAll(/<a\b[^>]*style="([^"]+)"[^>]*>/g)].map(match => match[1]);
       assert.ok(links.length >= 4, `${theme.name}/${mode} should include the sample CTA and footer links`);
       assert.ok(links.every(style => /text-decoration:\s*none !important/.test(style)), `${theme.name}/${mode} should remove link underlines`);
       assert.doesNotMatch(preview, /style="[^"]*font-family: "[^"]*"/, `${theme.name}/${mode} must not contain broken quoted font-family attributes`);
     }
   }
+  assert.ok(themes.every(theme => theme.alignment === theme.buttonAlignment));
+  assert.deepEqual(new Set(themes.map(theme => theme.headerMode)), new Set(['image-title', 'image-only', 'text-only']));
+  assert.deepEqual(new Set(themes.map(theme => theme.buttonAlignment)), new Set(['left', 'center', 'right']));
 });
 
 test('renders safe localized RTL output and escaped, interpolated inbox preheaders', async t => {
@@ -213,6 +227,42 @@ test('renders safe localized RTL output and escaped, interpolated inbox preheade
   assert.throws(() => service.createTemplate(ThemeType.SYSTEM, 'light', plainConfig({ language: 'en" onload="x' })), /language tag/i);
   assert.throws(() => service.createTemplate(ThemeType.SYSTEM, 'light', plainConfig({ direction: 'sideways' })), /text direction/i);
   assert.throws(() => service.createTemplate(ThemeType.SYSTEM, 'light', plainConfig({ preheader: 'x'.repeat(501) })), /500/);
+});
+
+test('accepts body.html as an explicit trusted HTML template field', async t => {
+  const service = new TemplateService();
+  t.after(() => service.dispose());
+  const html = await service.previewTemplate(ThemeType.SAAS, 'light', {
+    body: { html: '<h2>Olá</h2><p>Conteúdo <strong>formatado</strong>.</p>' }
+  }, {});
+  assert.match(html, /<h2>Olá<\/h2>/);
+  assert.match(html, /<strong>formatado<\/strong>/);
+});
+
+test('renders a validated hero image and image logo in the header', async t => {
+  const service = new TemplateService();
+  t.after(() => service.dispose());
+  const html = await service.previewTemplate(ThemeType.PAPER, 'light', {
+    header: {
+      show: true,
+      logo: { type: 'image', imageUrl: 'https://example.com/logo.png', alt: 'Acme logo' },
+      heroImageUrl: 'https://example.com/hero.jpg',
+      heroAlt: 'Acme announcement'
+    },
+    body: { title: 'Launch', message: 'A new chapter.' }
+  }, {});
+  assert.match(html, /src="https:\/\/example\.com\/hero\.jpg"/);
+  assert.match(html, /alt="Acme announcement"/);
+  assert.match(html, /src="https:\/\/example\.com\/logo\.png"/);
+  assert.throws(() => service.createTemplate(ThemeType.PAPER, 'light', {
+    header: { show: true, heroImageUrl: 'javascript:alert(1)' }
+  }), /valid URL|unsafe URL scheme/i);
+  const split = await service.previewTemplate(ThemeType.MODERN, 'light', {
+    header: { show: true, logo: { type: 'image', imageUrl: 'https://example.com/compact.png', alt: 'Compact logo' } },
+    body: { title: 'Split header', message: 'Logo beside the title.' }
+  }, { headerContent: 'Weekly brief' });
+  assert.match(split, /<td valign="middle" align="left" style="width:42%;">/);
+  assert.match(split, /Weekly brief/);
 });
 
 test('escapes code text before Monokai syntax highlighting', async t => {

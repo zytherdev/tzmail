@@ -30,10 +30,14 @@ export interface IBodyConfig {
   message?: string;
   /** HTML intencionalmente confiável; os demais campos textuais são escapados pelo renderer. */
   content?: string;
+  /** Alias explícito de content para quem prefere nomear o campo como HTML. */
+  html?: string;
   buttonText?: string;
   buttonUrl?: string;
   buttonVariant?: 'primary' | 'secondary' | 'success' | 'danger';
   alignment?: 'left' | 'center' | 'right';
+  /** Alinhamento do CTA; quando omitido, acompanha body.alignment. */
+  buttonAlignment?: 'left' | 'center' | 'right';
   backgroundColor?: string;
   textColor?: string;
   fontSize?: number;
@@ -48,6 +52,9 @@ export interface IHeaderConfig {
     alt?: string;
     size?: 'small' | 'medium' | 'large';
   };
+  /** Optional full-width header image rendered above the logo/content. */
+  heroImageUrl?: string;
+  heroAlt?: string;
   backgroundColor?: string;
   textColor?: string;
 }

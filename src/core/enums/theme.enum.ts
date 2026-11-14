@@ -1,4 +1,3 @@
-
 export enum ThemeType {
   SYSTEM = 'system',
   MONOKAI = 'monokai',
@@ -14,5 +13,24 @@ export enum ThemeType {
   PASTEL = 'pastel',
   NEOBRUTAL = 'neobrutal',
   GLASS = 'glass',
-  MIDNIGHT = 'midnight'
+  MIDNIGHT = 'midnight',
+  SAAS = 'saas',
+  CITRUS = 'citrus',
+  BERRY = 'berry',
+  PAPER = 'paper',
+  NEON = 'neon',
+  ALPINE = 'alpine',
+  ORBIT = 'orbit',
+  LINEN = 'linen',
+  BLOOM = 'bloom'
+  , SLATE = 'slate'
+  , MARIGOLD = 'marigold'
+  , INKWELL = 'inkwell'
+  , TIDE = 'tide'
+  , CLAY = 'clay'
+  , CLOUD = 'cloud'
+  , CAMPUS = 'campus'
+  , NOIR = 'noir'
+  , MINT = 'mint'
+  , SAFFRON = 'saffron'
 }

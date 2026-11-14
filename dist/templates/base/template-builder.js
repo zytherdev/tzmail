@@ -55,6 +55,63 @@ class TemplateBuilder {
         this.template += `<div aria-hidden="true" style="display:none!important;visibility:hidden;opacity:0;color:transparent;height:0;width:0;max-height:0;max-width:0;overflow:hidden;mso-hide:all;font-size:1px;line-height:1px;">${escapeHtml(preheader)}</div>`;
         return this;
     }
+    headerAlignment() {
+        return ['corporate', 'editorial', 'forest', 'citrus', 'midnight'].includes(this.theme.id) ? 'left' : 'center';
+    }
+    footerAlignment() {
+        return ['corporate', 'editorial', 'forest', 'citrus'].includes(this.theme.id) ? 'left' : 'center';
+    }
+    isEditorialLayout() {
+        return ['corporate', 'editorial', 'citrus', 'midnight'].includes(this.theme.id);
+    }
+    visualPlan() {
+        const plans = {
+            system: { header: 'compact', body: 'open', footer: 'minimal' },
+            monokai: { header: 'rail', body: 'technical', footer: 'bar' },
+            modern: { header: 'split', body: 'card', footer: 'split' },
+            corporate: { header: 'editorial', body: 'editorial', footer: 'editorial' },
+            minimal: { header: 'compact', body: 'frame', footer: 'compact' },
+            aurora: { header: 'hero', body: 'inset', footer: 'stacked' },
+            ocean: { header: 'band', body: 'callout', footer: 'bar' },
+            sunset: { header: 'stacked', body: 'frame', footer: 'split' },
+            lavender: { header: 'split', body: 'inset', footer: 'minimal' },
+            forest: { header: 'editorial', body: 'editorial', footer: 'stacked' },
+            editorial: { header: 'editorial', body: 'open', footer: 'editorial' },
+            pastel: { header: 'band', body: 'card', footer: 'split' },
+            neobrutal: { header: 'rail', body: 'frame', footer: 'bar' },
+            glass: { header: 'compact', body: 'inset', footer: 'minimal' },
+            midnight: { header: 'hero', body: 'callout', footer: 'editorial' },
+            saas: { header: 'split', body: 'inset', footer: 'split' },
+            citrus: { header: 'editorial', body: 'frame', footer: 'bar' },
+            berry: { header: 'band', body: 'card', footer: 'stacked' },
+            paper: { header: 'hero', body: 'editorial', footer: 'minimal' },
+            neon: { header: 'rail', body: 'frame', footer: 'bar' },
+            alpine: { header: 'split', body: 'callout', footer: 'split' },
+            orbit: { header: 'band', body: 'inset', footer: 'bar' },
+            linen: { header: 'stacked', body: 'open', footer: 'editorial' },
+            bloom: { header: 'stacked', body: 'card', footer: 'stacked' },
+            slate: { header: 'hero', body: 'technical', footer: 'minimal' },
+            marigold: { header: 'stacked', body: 'callout', footer: 'bar' },
+            inkwell: { header: 'compact', body: 'editorial', footer: 'bar' },
+            tide: { header: 'band', body: 'open', footer: 'minimal' },
+            clay: { header: 'editorial', body: 'card', footer: 'compact' },
+            cloud: { header: 'split', body: 'open', footer: 'stacked' },
+            campus: { header: 'rail', body: 'inset', footer: 'editorial' },
+            noir: { header: 'hero', body: 'frame', footer: 'bar' },
+            mint: { header: 'band', body: 'technical', footer: 'split' },
+            saffron: { header: 'split', body: 'callout', footer: 'minimal' }
+        };
+        return plans[this.theme.id] || { header: 'stacked', body: 'open', footer: 'stacked' };
+    }
+    headerLayout() {
+        return this.visualPlan().header;
+    }
+    bodyLayout() {
+        return this.visualPlan().body;
+    }
+    footerLayout() {
+        return this.visualPlan().footer;
+    }
     buildHeader(content) {
         if (!this.config.header?.show)
             return this;
@@ -63,33 +120,41 @@ class TemplateBuilder {
         const headerBorder = borderFor(styles.accentColor, styles.accentWidth, colors);
         const headerBackground = this.config.header?.backgroundColor || colors.background;
         const headerTextColor = (0, color_accessibility_1.readableTextColor)(this.config.header?.textColor || colors.text, headerBackground, colors.text);
+        const alignment = this.headerAlignment();
         const headerStyles = `
       background-color: ${headerBackground};
       color: ${headerTextColor};
-      padding: ${this.theme.spacing.lg} ${styles.horizontalPadding};
+      padding: 18px ${styles.horizontalPadding};
       border-bottom: ${headerBorder};
       font-family: ${this.theme.typography.fontFamily};
+      text-align: ${alignment};
     `;
-        const logoHtml = this.buildLogo();
+        const layout = this.headerLayout();
+        const logoHtml = this.buildLogo(layout === 'split' || layout === 'rail' ? 'left' : alignment);
+        const heroHtml = this.config.header?.heroImageUrl
+            ? `<table width="100%" cellpadding="0" cellspacing="0" role="presentation"><tr><td align="${alignment}" style="padding:0 0 ${this.theme.spacing.md} 0;"><img src="${safeHref(this.config.header.heroImageUrl)}" alt="${escapeHtml(this.config.header.heroAlt || '')}" width="600" style="display:block;width:100%;max-width:600px;height:auto;border:0;border-radius:${['paper', 'editorial'].includes(this.theme.id) ? '0px' : styles.imageBorderRadius};" /></td></tr></table>`
+            : '';
+        const headerContentHtml = content ? `<div style="font-size:13px;line-height:1.4;color:${headerTextColor};text-align:${alignment};">${escapeHtml(content)}</div>` : '';
+        const composedHeader = (layout === 'split' || layout === 'rail') && content
+            ? `<table width="100%" cellpadding="0" cellspacing="0" role="presentation"><tr><td valign="middle" align="left" style="width:${layout === 'rail' ? '34%' : '42%'};">${logoHtml}</td><td valign="middle" align="right" style="width:${layout === 'rail' ? '66%' : '58%'};padding-left:16px;${layout === 'rail' ? `border-left:2px solid ${colors.primary};` : ''}">${headerContentHtml}</td></tr></table>`
+            : layout === 'band'
+                ? `<div style="border:1px solid ${colors.border};border-radius:${styles.imageBorderRadius};padding:14px 18px;">${logoHtml}${content ? `<div style="padding-top:8px;text-align:${alignment};">${headerContentHtml}</div>` : ''}</div>`
+                : layout === 'editorial'
+                    ? `${logoHtml}${content ? `<div style="padding-top:${this.theme.spacing.sm};text-align:${alignment};">${headerContentHtml}</div>` : ''}`
+                    : `${logoHtml}${content ? `<div style="padding-top:${this.theme.spacing.sm};text-align:${alignment};">${headerContentHtml}</div>` : ''}`;
         this.template += `
       <table width="100%" cellpadding="0" cellspacing="0" role="presentation" bgcolor="${headerBackground}" style="width:100%;background-color:${headerBackground};">
         <tr>
-          <td class="email-header-cell" style="${escapeHtml(headerStyles)}" align="center">
-            ${logoHtml}
-            ${content ? `
-              <table width="100%" cellpadding="0" cellspacing="0" role="presentation">
-                <tr><td style="padding-top:${this.theme.spacing.md};font-size:${this.theme.typography.fontSizes.medium};line-height:1.4;">
-                  ${escapeHtml(content)}
-                </td></tr>
-              </table>
-            ` : ''}
+          <td class="email-header-cell" style="${escapeHtml(headerStyles)}" align="${alignment}">
+            ${heroHtml}
+            ${composedHeader}
           </td>
         </tr>
       </table>
     `;
         return this;
     }
-    buildLogo() {
+    buildLogo(alignment = this.headerAlignment()) {
         const logo = this.config.header?.logo;
         if (!logo)
             return '';
@@ -103,18 +168,22 @@ class TemplateBuilder {
         display: inline-block;
         max-width: 100%;
         font-family: ${styles.logoFontFamily || this.theme.typography.fontFamily};
-        font-size: ${this.theme.typography.fontSizes.xlarge};
-        font-weight: ${this.theme.typography.fontWeights.bold};
+        font-size: 18px;
+        font-weight: ${this.theme.typography.fontWeights.medium};
         line-height: 1.2;
         color: ${logoColor};
         text-transform: ${styles.logoTextTransform || 'none'};
         letter-spacing: ${styles.logoLetterSpacing || 'normal'};
+        ${this.isEditorialLayout() ? `border-bottom: 2px solid ${colors.primary}; padding-bottom: 6px;` : ''}
+        ${this.theme.id === 'neobrutal' ? `border: 2px solid ${colors.primary}; padding: 8px 12px; box-shadow: 4px 4px 0 ${colors.border};` : ''}
       `;
             return `<div style="${escapeHtml(textStyles)}">${escapeHtml(logo.text || 'Logo')}</div>`;
         }
         if (logo.type === 'image') {
-            const imageHeight = logo.size === 'small' ? 30 : logo.size === 'large' ? 100 : 60;
-            return `<img src="${safeHref(logo.imageUrl || '')}" alt="${escapeHtml(logo.alt || 'Logo')}" height="${imageHeight}" style="display:block;width:auto;height:${imageHeight}px;max-width:100%;border:0;border-radius:${styles.imageBorderRadius};margin:0 auto;" />`;
+            const themeHeight = ['minimal', 'system', 'glass', 'noir'].includes(this.theme.id) ? 26 : ['corporate', 'editorial', 'paper', 'linen', 'campus', 'inkwell'].includes(this.theme.id) ? 32 : 36;
+            const imageHeight = logo.size === 'small' ? 22 : logo.size === 'large' ? 52 : themeHeight;
+            const imageMargin = alignment === 'center' ? '0 auto' : '0';
+            return `<img src="${safeHref(logo.imageUrl || '')}" alt="${escapeHtml(logo.alt || 'Logo')}" height="${imageHeight}" style="display:block;width:auto;height:${imageHeight}px;max-width:100%;border:0;border-radius:${styles.imageBorderRadius};margin:${imageMargin};" />`;
         }
         return '';
     }
@@ -131,22 +200,36 @@ class TemplateBuilder {
             processedContent = this.formatMinimalContent(content, bodyTextColor);
         else if (this.theme.id === 'monokai' && content.includes('<code>'))
             processedContent = this.highlightCode(content, bodyBackground, bodyTextColor);
+        const bodyLayout = this.bodyLayout();
+        const framedContent = bodyLayout === 'card'
+            ? `<div style="border:1px solid ${colors.border};border-radius:${styles.borderRadius};padding:18px;">${processedContent}</div>`
+            : bodyLayout === 'editorial'
+                ? `<div style="border-top:1px solid ${colors.border};padding-top:16px;">${processedContent}</div>`
+                : bodyLayout === 'technical'
+                    ? `<div style="border:1px solid ${colors.border};border-left:3px solid ${colors.primary};padding:16px 18px;background-color:${bodyBackground};">${processedContent}</div>`
+                    : bodyLayout === 'inset'
+                        ? `<div style="background-color:${colors.border};padding:4px;border-radius:${styles.borderRadius};"><div style="background-color:${bodyBackground};padding:18px;border-radius:${styles.borderRadius};">${processedContent}</div></div>`
+                        : bodyLayout === 'callout'
+                            ? `<div style="border-left:4px solid ${colors.primary};background-color:${colors.border};padding:18px 20px;">${processedContent}</div>`
+                            : bodyLayout === 'frame'
+                                ? `<div style="border:1px solid ${colors.primary};padding:18px 20px;border-radius:${styles.borderRadius};">${processedContent}</div>`
+                                : processedContent;
         const bodyStyles = `
-      padding: ${this.theme.spacing.xl} ${styles.horizontalPadding};
+      padding: 24px ${styles.horizontalPadding};
       background-color: ${bodyBackground};
       color: ${bodyTextColor};
       font-family: ${this.theme.typography.fontFamily};
       font-size: ${this.theme.typography.fontSizes.medium};
       line-height: ${styles.lineHeight};
-      border-left: ${accentBorder};
-      border-radius: ${styles.borderRadius};
-      box-shadow: ${styles.boxShadow};
+      border-left: ${bodyLayout === 'open' ? accentBorder : '0'};
+      border-radius: ${bodyLayout === 'open' ? styles.borderRadius : '0'};
+      box-shadow: ${bodyLayout === 'open' ? styles.boxShadow : 'none'};
       word-wrap: break-word;
       overflow-wrap: break-word;
     `;
         this.template += `
       <table width="100%" cellpadding="0" cellspacing="0" role="presentation" bgcolor="${bodyBackground}" style="width:100%;background-color:${bodyBackground};">
-        <tr><td class="email-body" style="${escapeHtml(bodyStyles)}">${processedContent}</td></tr>
+        <tr><td class="email-body" style="${escapeHtml(bodyStyles)}">${framedContent}</td></tr>
       </table>
     `;
         return this;
@@ -197,7 +280,7 @@ class TemplateBuilder {
         const buttonColor = variant === 'primary' ? colors.primary : variant === 'secondary' ? colors.secondary : variant === 'success' ? colors.success : colors.error;
         const button = this.emailStyles.button;
         const isOutline = button.appearance === 'outline';
-        const alignment = this.config.body?.alignment || 'left';
+        const alignment = this.config.body?.buttonAlignment || this.config.body?.alignment || 'left';
         const buttonTextColor = isOutline
             ? (0, color_accessibility_1.contrastRatio)(buttonColor, colors.background) >= 4.5 ? buttonColor : colors.text
             : (0, color_accessibility_1.accessibleTextColor)(buttonColor);
@@ -205,14 +288,14 @@ class TemplateBuilder {
       display: inline-block;
       box-sizing: border-box;
       max-width: 100%;
-      padding: 13px 24px;
+      padding: 11px 18px;
       background-color: ${isOutline ? colors.background : buttonColor};
       border: ${button.borderWidth} solid ${isOutline ? buttonColor : 'transparent'};
       border-radius: ${button.borderRadius};
       box-shadow: ${button.boxShadow};
       color: ${buttonTextColor};
       font-family: ${this.theme.typography.fontFamily};
-      font-size: ${this.theme.typography.fontSizes.medium};
+      font-size: 13px;
       font-weight: ${this.theme.typography.fontWeights.bold};
       line-height: 1.3;
       letter-spacing: ${button.letterSpacing || 'normal'};
@@ -221,8 +304,8 @@ class TemplateBuilder {
     `;
         this.template += `
       <table width="100%" class="button-wrap" cellpadding="0" cellspacing="0" role="presentation" style="width:100%;">
-        <tr><td align="${alignment}" style="padding:${this.theme.spacing.sm} 8px;">
-          <table class="button" align="${alignment}" cellpadding="0" cellspacing="0" role="presentation">
+        <tr><td align="${alignment}" style="padding:12px 8px;text-align:${alignment};">
+          <table class="button" align="${alignment}" cellpadding="0" cellspacing="0" role="presentation" style="margin:${alignment === 'center' ? '0 auto' : alignment === 'right' ? '0 0 0 auto' : '0'};">
             <tr><td align="${alignment}"><a class="button-link" href="${safeUrl}" style="${escapeHtml(buttonStyles)}">${escapeHtml(text)}</a></td></tr>
           </table>
         </td></tr>
@@ -239,13 +322,15 @@ class TemplateBuilder {
         const footerBackground = this.config.footer?.backgroundColor || colors.background;
         const defaultFooterTextColor = (0, color_accessibility_1.contrastRatio)(colors.textMuted, footerBackground) >= 4.5 ? colors.textMuted : colors.text;
         const footerTextColor = (0, color_accessibility_1.readableTextColor)(this.config.footer?.textColor || defaultFooterTextColor, footerBackground, colors.text);
-        const copyrightStyles = escapeHtml(`padding-top:${this.theme.spacing.md};font-family:${this.theme.typography.fontFamily};font-size:${this.theme.typography.fontSizes.small};line-height:1.5;color:${footerTextColor};text-align:center;`);
-        const unsubscribeCellStyles = escapeHtml(`padding-top:${this.theme.spacing.sm};text-align:center;font-family:${this.theme.typography.fontFamily};font-size:${this.theme.typography.fontSizes.small};line-height:1.5;`);
+        const footerAlignment = this.footerAlignment();
+        const footerLayout = this.footerLayout();
+        const copyrightStyles = escapeHtml(`padding-top:12px;font-family:${this.theme.typography.fontFamily};font-size:${this.theme.typography.fontSizes.small};line-height:1.5;color:${footerTextColor};text-align:center;`);
+        const unsubscribeCellStyles = escapeHtml(`padding-top:6px;text-align:center;font-family:${this.theme.typography.fontFamily};font-size:${this.theme.typography.fontSizes.small};line-height:1.5;`);
         const footerStyles = `
       background-color: ${footerBackground};
       border-top: ${footerBorder};
-      padding: ${this.theme.spacing.lg} ${this.theme.spacing.xl};
-      text-align: center;
+      padding: 20px 24px;
+      text-align: ${footerAlignment};
       font-family: ${this.theme.typography.fontFamily};
       font-size: ${this.theme.typography.fontSizes.small};
       line-height: 1.5;
@@ -253,27 +338,37 @@ class TemplateBuilder {
     `;
         const footerLinks = this.buildFooterLinks();
         const socialLinks = this.buildSocialLinks();
-        this.template += `
-      <table width="100%" cellpadding="0" cellspacing="0" role="presentation" bgcolor="${footerBackground}" style="width:100%;background-color:${footerBackground};">
-        <tr><td class="email-footer-cell" bgcolor="${footerBackground}" style="${escapeHtml(footerStyles)}" align="center">
-          ${footerLinks}
-          ${socialLinks}
-          ${this.config.footer?.copyrightText ? `
+        const footerMeta = `${this.config.footer?.copyrightText ? `
             <table width="100%" cellpadding="0" cellspacing="0" role="presentation">
-              <tr><td style="${copyrightStyles}">
+              <tr><td style="${copyrightStyles}text-align:${footerAlignment};">
                 ${escapeHtml(this.config.footer.copyrightText)}
               </td></tr>
             </table>
           ` : ''}
           ${this.config.footer?.unsubscribeText ? `
             <table width="100%" cellpadding="0" cellspacing="0" role="presentation">
-              <tr><td style="${unsubscribeCellStyles}">
+              <tr><td style="${unsubscribeCellStyles}text-align:${footerAlignment};">
                 ${this.config.footer.unsubscribeUrl
             ? `<a href="${safeHref(this.config.footer.unsubscribeUrl, true)}" style="color:${footerTextColor};${this.linkDecorationStyle()}">${escapeHtml(this.config.footer.unsubscribeText)}</a>`
             : escapeHtml(this.config.footer.unsubscribeText)}
               </td></tr>
             </table>
-          ` : ''}
+          ` : ''}`;
+        const footerContent = footerLayout === 'split'
+            ? `<table width="100%" cellpadding="0" cellspacing="0" role="presentation"><tr><td valign="top" align="left" style="width:58%;">${footerLinks}${socialLinks}</td><td valign="top" align="right" style="width:42%;">${footerMeta}</td></tr></table>`
+            : footerLayout === 'editorial'
+                ? `<div style="border-top:1px solid ${colors.border};padding-top:14px;">${footerLinks}${socialLinks}${footerMeta}</div>`
+                : footerLayout === 'bar'
+                    ? `<table width="100%" cellpadding="0" cellspacing="0" role="presentation"><tr><td valign="middle" align="left" style="width:65%;">${footerLinks}${socialLinks}</td><td valign="middle" align="right" style="width:35%;font-size:11px;">${footerMeta}</td></tr></table>`
+                    : footerLayout === 'compact'
+                        ? `${footerLinks}${footerMeta}`
+                        : footerLayout === 'minimal'
+                            ? `${footerMeta}${footerLinks}`
+                            : `${footerLinks}${socialLinks}${footerMeta}`;
+        this.template += `
+      <table width="100%" cellpadding="0" cellspacing="0" role="presentation" bgcolor="${footerBackground}" style="width:100%;background-color:${footerBackground};">
+        <tr><td class="email-footer-cell" bgcolor="${footerBackground}" style="${escapeHtml(footerStyles)}" align="${footerAlignment}">
+          ${footerContent}
         </td></tr>
       </table>
     `;
@@ -287,12 +382,14 @@ class TemplateBuilder {
         const preferredLinkColor = (0, color_accessibility_1.contrastRatio)(colors.textMuted, footerBackground) >= 4.5 ? colors.textMuted : colors.text;
         const linkColor = (0, color_accessibility_1.readableTextColor)(this.config.footer.textColor || preferredLinkColor, footerBackground, colors.text);
         const linkStyles = `color:${linkColor};${this.linkDecorationStyle()}font-family:${this.theme.typography.fontFamily};font-size:${this.theme.typography.fontSizes.small};line-height:1.5;`;
+        const alignment = this.footerAlignment();
+        const separator = this.isEditorialLayout() ? `border-left:1px solid ${colors.border};` : '';
         return `
       <table width="100%" cellpadding="0" cellspacing="0" role="presentation" style="width:100%;">
-        <tr><td style="padding-bottom:${this.theme.spacing.md};" align="center">
-          <table class="footer-links" cellpadding="0" cellspacing="0" role="presentation">
-            <tr>${this.config.footer.links.map(link => `
-              <td class="footer-link-cell" style="padding:0 8px;">
+        <tr><td style="padding-bottom:12px;" align="${alignment}">
+          <table class="footer-links" align="${alignment}" cellpadding="0" cellspacing="0" role="presentation">
+            <tr>${this.config.footer.links.map((link, index) => `
+              <td class="footer-link-cell" style="padding:0 8px;${index ? separator : ''}">
                 <a href="${safeHref(link.url, true)}" style="${escapeHtml(linkStyles)}">${escapeHtml(link.text)}</a>
               </td>
             `).join('')}</tr>

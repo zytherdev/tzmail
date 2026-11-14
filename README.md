@@ -286,7 +286,7 @@ All factories accept the same optional template and attachment options. The defa
 
 ## Templates and themes
 
-The library includes 15 themes, each with `light` and `dark` variants. The original options are `ThemeType.MODERN`, `CORPORATE`, `MINIMAL`, `MONOKAI`, and `SYSTEM`; ten new palettes are also available:
+The library includes 34 themes, each with `light` and `dark` variants. The original options are `ThemeType.MODERN`, `CORPORATE`, `MINIMAL`, `MONOKAI`, and `SYSTEM`; additional palettes are also available:
 
 | Theme | Style |
 | --- | --- |
@@ -300,6 +300,25 @@ The library includes 15 themes, each with `light` and `dark` variants. The origi
 | `NEOBRUTAL` | Bold black and white with electric yellow and cobalt accents. |
 | `GLASS` | Cool blue-gray colors on solid, email-client-friendly surfaces. |
 | `MIDNIGHT` | Premium midnight navy with champagne-gold accents. |
+| `SAAS` | Crisp indigo product-update layout with system fonts. |
+| `CITRUS` | Warm orange editorial palette for announcements and launches. |
+| `BERRY` | Polished berry palette with a rounded, community-friendly CTA. |
+| `PAPER` | Editorial newsletter layout with warm paper surfaces. |
+| `NEON` | Technical high-contrast layout with teal energy. |
+| `ALPINE` | Fresh natural layout with rounded green surfaces. |
+| `ORBIT` | Precise violet product layout with a compact rhythm. |
+| `LINEN` | Quiet editorial layout with warm neutral surfaces. |
+| `BLOOM` | Delicate berry layout for launches and community notes. |
+| `SLATE` | Sober modular layout for modern corporate communication. |
+| `MARIGOLD` | Warm editorial layout with restrained amber accents. |
+| `INKWELL` | Literary black-and-white layout with a measured rhythm. |
+| `TIDE` | Open marine layout with calm teal surfaces. |
+| `CLAY` | Warm crafted layout with soft terracotta framing. |
+| `CLOUD` | Light product layout with airy blue surfaces. |
+| `CAMPUS` | Academic editorial layout with formal typography. |
+| `NOIR` | Minimal premium layout with controlled monochrome contrast. |
+| `MINT` | Fresh rounded layout for calm product and community updates. |
+| `SAFFRON` | Bright product-editorial layout with orange and gold accents. |
 
 All themes use fluid, table-based email markup. On screens up to 600px wide, calls to action expand to the available width and footer links stack vertically. Use `TemplateFactory.listThemes()` to enumerate available themes and `TemplateFactory.getThemeInfo(theme)` to read each theme's description and features.
 
@@ -309,7 +328,7 @@ Each built-in `ITheme` now includes an `emailStyles` profile for desktop width, 
 
 Theme-selected or caller-supplied logo, header, body, and footer text colors are checked against their effective backgrounds. If a requested foreground would be unreadable, the renderer substitutes a WCAG AA-safe fallback while preserving the theme accent on borders and fills.
 
-Body copy and its CTA share the configured `body.alignment` (`left`, `center`, or `right`); `body.backgroundColor` and `body.textColor` can override the theme's body palette. Footer navigation and unsubscribe links have no underline by default. Set `linkDecoration: 'underline'` when underlined links are preferred; the setting applies consistently to both.
+Body copy uses `body.alignment` (`left`, `center`, or `right`). The CTA follows it by default, or can be positioned independently with `body.buttonAlignment`. `body.backgroundColor` and `body.textColor` can override the theme's body palette. Footer navigation and unsubscribe links have no underline by default. Set `linkDecoration: 'underline'` when underlined links are preferred; the setting applies consistently to both.
 
 Templates also support `language` (default `en`), `direction` (`ltr`, `rtl`, or `auto`; default `ltr`), and a hidden `preheader` (up to 500 printable characters) for inbox previews. Preheaders support the same escaped per-recipient placeholders as other text fields. After changing a theme or the renderer, refresh the gallery's embedded samples with `npm run gallery:build`.
 
@@ -347,6 +366,29 @@ const html = await service.previewTemplate(
 );
 ```
 
+Headers também podem usar um logo de imagem e uma imagem hero de largura total. As URLs precisam ser `http:` ou `https:` e as imagens remotas devem ser hospedadas em um domínio confiável:
+
+```typescript
+const template = service.createTemplate(ThemeType.PAPER, 'light', {
+  header: {
+    show: true,
+    logo: {
+      type: 'image',
+      imageUrl: 'https://cdn.example.com/brand/logo.png',
+      alt: 'Acme'
+    },
+    heroImageUrl: 'https://cdn.example.com/campaign/spring.jpg',
+    heroAlt: 'Spring collection'
+  },
+  body: {
+    alignment: 'left',
+    buttonAlignment: 'right',
+    title: 'A new season is here',
+    message: 'Explore the latest collection.'
+  }
+});
+```
+
 `ITemplateServiceOptions` options include:
 
 | Option | Default | Description |
@@ -375,7 +417,7 @@ The cache and history are local to the process, not distributed. Call `service.d
 ### HTML and URL policy
 
 - `title`, `message`, logo name, button/link/footer text, and textual metadata are escaped by the renderer.
-- `body.content` is the only configuration field treated as **trusted HTML** to allow custom markup. Do not pass user-provided HTML without sanitizing it with a policy appropriate to the application.
+- `body.content` and `body.html` are treated as **trusted HTML** to allow custom markup. `body.html` is the explicit, readable alias; `content` remains supported for compatibility. Do not pass user-provided HTML without sanitizing it with a policy appropriate to the application.
 - `TemplateBuilder.buildBody()` is a low-level API and also expects trusted HTML; prefer `TemplateService` for validation and interpolation.
 - `IEmailOptions.html` is also passed through as HTML supplied by the caller; treat it as trusted content or sanitize it before sending.
 - Action and link URLs accept absolute `https:`, `http:`, or `mailto:` URLs; images/logos and social links accept `https:`/`http:`. Schemes such as `javascript:` and `data:` and attributes containing injection characters are rejected.

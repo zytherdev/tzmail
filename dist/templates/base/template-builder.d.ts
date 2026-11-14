@@ -8,6 +8,13 @@ export declare class TemplateBuilder {
     constructor(theme: ITheme, config: ITemplateConfig, variant: 'light' | 'dark');
     private get emailStyles();
     buildPreheader(): this;
+    private headerAlignment;
+    private footerAlignment;
+    private isEditorialLayout;
+    private visualPlan;
+    private headerLayout;
+    private bodyLayout;
+    private footerLayout;
     buildHeader(content?: string): this;
     private buildLogo;
     buildBody(content: string): this;

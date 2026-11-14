@@ -17,6 +17,25 @@ const pastel_theme_1 = require("../templates/themes/pastel.theme");
 const neobrutal_theme_1 = require("../templates/themes/neobrutal.theme");
 const glass_theme_1 = require("../templates/themes/glass.theme");
 const midnight_theme_1 = require("../templates/themes/midnight.theme");
+const saas_theme_1 = require("../templates/themes/saas.theme");
+const citrus_theme_1 = require("../templates/themes/citrus.theme");
+const berry_theme_1 = require("../templates/themes/berry.theme");
+const paper_theme_1 = require("../templates/themes/paper.theme");
+const neon_theme_1 = require("../templates/themes/neon.theme");
+const alpine_theme_1 = require("../templates/themes/alpine.theme");
+const orbit_theme_1 = require("../templates/themes/orbit.theme");
+const linen_theme_1 = require("../templates/themes/linen.theme");
+const bloom_theme_1 = require("../templates/themes/bloom.theme");
+const slate_theme_1 = require("../templates/themes/slate.theme");
+const marigold_theme_1 = require("../templates/themes/marigold.theme");
+const inkwell_theme_1 = require("../templates/themes/inkwell.theme");
+const tide_theme_1 = require("../templates/themes/tide.theme");
+const clay_theme_1 = require("../templates/themes/clay.theme");
+const cloud_theme_1 = require("../templates/themes/cloud.theme");
+const campus_theme_1 = require("../templates/themes/campus.theme");
+const noir_theme_1 = require("../templates/themes/noir.theme");
+const mint_theme_1 = require("../templates/themes/mint.theme");
+const saffron_theme_1 = require("../templates/themes/saffron.theme");
 const template_builder_1 = require("../templates/base/template-builder");
 const color_accessibility_1 = require("../templates/base/color-accessibility");
 const SAFE_COLOR = /^(#[\da-f]{3,8}|[a-z]{1,24}|(?:rgb|rgba|hsl|hsla)\([\d.%\s,+/-]+\))$/i;
@@ -64,7 +83,9 @@ function resolveTemplateConfig(config, variables) {
                 text: interpolate(config.header.logo.text, variables),
                 imageUrl: interpolate(config.header.logo.imageUrl, variables),
                 alt: interpolate(config.header.logo.alt, variables)
-            } : undefined
+            } : undefined,
+            heroImageUrl: interpolate(config.header.heroImageUrl, variables),
+            heroAlt: interpolate(config.header.heroAlt, variables)
         } : undefined,
         body: config.body ? {
             ...config.body,
@@ -72,6 +93,7 @@ function resolveTemplateConfig(config, variables) {
             message: interpolate(config.body.message, variables),
             // Substitutions inside trusted HTML are escaped before insertion.
             content: interpolate(config.body.content, variables, true),
+            html: interpolate(config.body.html, variables, true),
             buttonText: interpolate(config.body.buttonText, variables),
             buttonUrl: interpolate(config.body.buttonUrl, variables)
         } : undefined,
@@ -107,7 +129,26 @@ class TemplateFactory {
         [theme_enum_1.ThemeType.PASTEL, new pastel_theme_1.PastelTheme()],
         [theme_enum_1.ThemeType.NEOBRUTAL, new neobrutal_theme_1.NeoBrutalTheme()],
         [theme_enum_1.ThemeType.GLASS, new glass_theme_1.GlassTheme()],
-        [theme_enum_1.ThemeType.MIDNIGHT, new midnight_theme_1.MidnightTheme()]
+        [theme_enum_1.ThemeType.MIDNIGHT, new midnight_theme_1.MidnightTheme()],
+        [theme_enum_1.ThemeType.SAAS, new saas_theme_1.SaaSTheme()],
+        [theme_enum_1.ThemeType.CITRUS, new citrus_theme_1.CitrusTheme()],
+        [theme_enum_1.ThemeType.BERRY, new berry_theme_1.BerryTheme()],
+        [theme_enum_1.ThemeType.PAPER, new paper_theme_1.PaperTheme()],
+        [theme_enum_1.ThemeType.NEON, new neon_theme_1.NeonTheme()],
+        [theme_enum_1.ThemeType.ALPINE, new alpine_theme_1.AlpineTheme()],
+        [theme_enum_1.ThemeType.ORBIT, new orbit_theme_1.OrbitTheme()],
+        [theme_enum_1.ThemeType.LINEN, new linen_theme_1.LinenTheme()],
+        [theme_enum_1.ThemeType.BLOOM, new bloom_theme_1.BloomTheme()],
+        [theme_enum_1.ThemeType.SLATE, new slate_theme_1.SlateTheme()],
+        [theme_enum_1.ThemeType.MARIGOLD, new marigold_theme_1.MarigoldTheme()],
+        [theme_enum_1.ThemeType.INKWELL, new inkwell_theme_1.InkwellTheme()],
+        [theme_enum_1.ThemeType.TIDE, new tide_theme_1.TideTheme()],
+        [theme_enum_1.ThemeType.CLAY, new clay_theme_1.ClayTheme()],
+        [theme_enum_1.ThemeType.CLOUD, new cloud_theme_1.CloudTheme()],
+        [theme_enum_1.ThemeType.CAMPUS, new campus_theme_1.CampusTheme()],
+        [theme_enum_1.ThemeType.NOIR, new noir_theme_1.NoirTheme()],
+        [theme_enum_1.ThemeType.MINT, new mint_theme_1.MintTheme()],
+        [theme_enum_1.ThemeType.SAFFRON, new saffron_theme_1.SaffronTheme()]
     ]);
     static createTemplate(themeType, variant, config) {
         const theme = this.themes.get(themeType);
@@ -144,6 +185,9 @@ class TemplateFactory {
                 const alignment = body.alignment || 'left';
                 if (!['left', 'center', 'right'].includes(alignment))
                     throw new Error('Invalid body alignment');
+                const buttonAlignment = body.buttonAlignment || alignment;
+                if (!['left', 'center', 'right'].includes(buttonAlignment))
+                    throw new Error('Invalid button alignment');
                 const fontSize = body.fontSize ?? 14;
                 if (!Number.isFinite(fontSize) || fontSize < 8 || fontSize > 72)
                     throw new Error('Invalid body font size');
@@ -154,13 +198,13 @@ class TemplateFactory {
                 cssColor(renderConfig.header?.textColor, 'inherit');
                 cssColor(renderConfig.footer?.backgroundColor, 'transparent');
                 cssColor(renderConfig.footer?.textColor, 'inherit');
-                const titleFontSize = fontSize + 7;
+                const titleFontSize = Math.min(fontSize + 4, 20);
                 const bodyCellStyle = `padding: 0; text-align: ${alignment}; background-color: ${background}; color: ${textColor}; font-size: ${fontSize}px; font-family: ${theme.typography.fontFamily};`;
-                const titleStyle = `margin: 0 0 16px 0; color: ${textColor}; font-family: ${theme.typography.fontFamily}; font-size: ${titleFontSize}px; font-weight: ${theme.typography.fontWeights.bold}; line-height: 1.3; text-align: ${alignment};`;
-                const messageStyle = `margin: 0; color: ${textColor}; font-family: ${theme.typography.fontFamily}; font-size: ${fontSize}px; line-height: 1.6; text-align: ${alignment};`;
+                const titleStyle = `margin: 0 0 10px 0; color: ${textColor}; font-family: ${theme.typography.fontFamily}; font-size: ${titleFontSize}px; font-weight: ${theme.typography.fontWeights.medium}; line-height: 1.25; text-align: ${alignment};`;
+                const messageStyle = `margin: 0; color: ${textColor}; font-family: ${theme.typography.fontFamily}; font-size: ${fontSize}px; line-height: 1.5; text-align: ${alignment};`;
                 // body.content é o único campo da configuração intencionalmente tratado como HTML confiável.
                 // Título, mensagem e valores de estilo são sempre escapados/validados e não viram HTML.
-                const bodyContent = body.content ?? `
+                const bodyContent = body.content ?? body.html ?? `
           <table width="100%" cellpadding="0" cellspacing="0" role="presentation">
             <tr>
               <td align="${alignment}" style="${escapeHtml(bodyCellStyle)}">
@@ -195,7 +239,26 @@ class TemplateFactory {
             [theme_enum_1.ThemeType.PASTEL]: { name: 'Pastel', description: 'Soft peach, mint, and lavender accents with readable contrast', features: ['Gentle pastel palette', 'Bright, friendly tone', 'Accessible text colors'] },
             [theme_enum_1.ThemeType.NEOBRUTAL]: { name: 'Neo Brutal', description: 'Bold black-and-white styling with electric color accents', features: ['High contrast', 'Strong typography', 'Distinctive cobalt and yellow'] },
             [theme_enum_1.ThemeType.GLASS]: { name: 'Glass', description: 'Cool, glass-inspired colors implemented with solid email-safe surfaces', features: ['Cool blue-gray palette', 'Solid client-compatible colors', 'Clean typography'] },
-            [theme_enum_1.ThemeType.MIDNIGHT]: { name: 'Midnight', description: 'Premium midnight navy and champagne-gold accents', features: ['Luxe dark palette', 'Warm paper light mode', 'Serif typography'] }
+            [theme_enum_1.ThemeType.MIDNIGHT]: { name: 'Midnight', description: 'Premium midnight navy and champagne-gold accents', features: ['Luxe dark palette', 'Warm paper light mode', 'Serif typography'] },
+            [theme_enum_1.ThemeType.SAAS]: { name: 'SaaS', description: 'Crisp product-update styling with indigo accents', features: ['Product-led hierarchy', 'Reliable system fonts', 'High-contrast CTA'] },
+            [theme_enum_1.ThemeType.CITRUS]: { name: 'Citrus', description: 'Warm editorial palette for announcements and launches', features: ['Warm orange palette', 'Serif typography', 'Compact rounded CTA'] },
+            [theme_enum_1.ThemeType.BERRY]: { name: 'Berry', description: 'Polished berry palette for personal and community messages', features: ['Soft berry surfaces', 'Pill CTA', 'Light and dark modes'] },
+            [theme_enum_1.ThemeType.PAPER]: { name: 'Paper', description: 'Editorial newsletter layout with warm paper surfaces', features: ['Serif typography', 'Outline CTA', 'Magazine-style spacing'] },
+            [theme_enum_1.ThemeType.NEON]: { name: 'Neon', description: 'Technical high-contrast layout with teal energy', features: ['Tech aesthetic', 'Strong borders', 'Uppercase CTA'] },
+            [theme_enum_1.ThemeType.ALPINE]: { name: 'Alpine', description: 'Fresh natural layout with rounded surfaces', features: ['Green palette', 'Pill CTA', 'Calm hierarchy'] },
+            [theme_enum_1.ThemeType.ORBIT]: { name: 'Orbit', description: 'Precise violet product layout with a compact rhythm', features: ['Compact hierarchy', 'Pill CTA', 'Cool violet accents'] },
+            [theme_enum_1.ThemeType.LINEN]: { name: 'Linen', description: 'Quiet editorial layout with warm neutral surfaces', features: ['Serif typography', 'Outline CTA', 'Low visual noise'] },
+            [theme_enum_1.ThemeType.BLOOM]: { name: 'Bloom', description: 'Delicate berry layout for launches and community notes', features: ['Soft accents', 'Rounded CTA', 'Light and dark modes'] },
+            [theme_enum_1.ThemeType.SLATE]: { name: 'Slate', description: 'Sober modular layout for modern corporate communication', features: ['Neutral palette', 'Structured spacing', 'Quiet CTA'] },
+            [theme_enum_1.ThemeType.MARIGOLD]: { name: 'Marigold', description: 'Warm editorial layout with restrained amber accents', features: ['Serif typography', 'Outline CTA', 'Warm contrast'] },
+            [theme_enum_1.ThemeType.INKWELL]: { name: 'Inkwell', description: 'Literary black-and-white layout with a measured rhythm', features: ['Serif typography', 'Hard edges', 'High contrast'] },
+            [theme_enum_1.ThemeType.TIDE]: { name: 'Tide', description: 'Open marine layout with calm teal surfaces', features: ['Teal palette', 'Rounded CTA', 'Open content'] },
+            [theme_enum_1.ThemeType.CLAY]: { name: 'Clay', description: 'Warm crafted layout with soft terracotta framing', features: ['Terracotta palette', 'Outline CTA', 'Soft frame'] },
+            [theme_enum_1.ThemeType.CLOUD]: { name: 'Cloud', description: 'Light product layout with airy blue surfaces', features: ['Airy spacing', 'Product hierarchy', 'Rounded container'] },
+            [theme_enum_1.ThemeType.CAMPUS]: { name: 'Campus', description: 'Academic editorial layout with formal typography', features: ['Serif hierarchy', 'Formal spacing', 'Uppercase CTA'] },
+            [theme_enum_1.ThemeType.NOIR]: { name: 'Noir', description: 'Minimal premium layout with controlled monochrome contrast', features: ['Monochrome palette', 'Compact rhythm', 'Uppercase CTA'] },
+            [theme_enum_1.ThemeType.MINT]: { name: 'Mint', description: 'Fresh rounded layout for calm product and community updates', features: ['Green palette', 'Pill CTA', 'Soft surfaces'] },
+            [theme_enum_1.ThemeType.SAFFRON]: { name: 'Saffron', description: 'Bright product-editorial layout with orange and gold accents', features: ['Warm accents', 'Callout body', 'Solid CTA'] }
         };
         const info = themeInfo[themeType];
         if (!info)
