@@ -6,7 +6,13 @@
 
 ## License
 
-tzmail is released under the [ISC License](LICENSE). 
+tzmail is released under the [ISC License](LICENSE).
+
+## Project site and launch assets
+
+The repository includes a standalone [project landing page](index.html) designed for GitHub Pages. It presents the library, quick-start usage, features, the 34-theme atlas, and the available launch visuals without requiring a build step or framework. To publish it, enable GitHub Pages for the repository's `main` branch and root directory.
+
+The promotional files are in [`assets/social`](assets/social): a square Instagram card, a vertical TikTok/Reels/Stories card, and a wide Open Graph/GitHub banner.
 
 ## Requirements and installation
 
