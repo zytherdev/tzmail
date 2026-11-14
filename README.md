@@ -506,7 +506,3 @@ Tests use the native `node:test` runner and fake transports; they do not send re
 3. Keep secrets out of the repository and rotate them; do not log message content or link tokens.
 4. Size `maxConnections`/`rateLimit` according to the provider and the number of replicas. Nodemailer pool limits are local; the BullMQ limiter is shared by the queue.
 5. Monitor `status`, `errorStage`, `accepted`/`rejected`, latency, and queues with redacted logs and custom metrics.
-
-## License
-
-ISC.
