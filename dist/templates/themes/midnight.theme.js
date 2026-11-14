@@ -2,38 +2,40 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.MidnightTheme = void 0;
 const theme_enum_1 = require("../../core/enums/theme.enum");
+const theme_designs_1 = require("./theme-designs");
 class MidnightTheme {
     id = theme_enum_1.ThemeType.MIDNIGHT;
+    composition = (0, theme_designs_1.getThemeComposition)(this.id);
     name = 'Midnight';
     light = {
-        primary: '#72551F',
-        secondary: '#655B49',
-        background: '#FFFCF5',
-        text: '#20232B',
-        textMuted: '#5B5D62',
-        border: '#D9D2C4',
-        success: '#286447',
-        error: '#A33138',
-        warning: '#795000'
+        primary: '#6A5423',
+        secondary: '#615547',
+        background: '#F5EEDC',
+        text: '#262A35',
+        textMuted: '#5D564C',
+        border: '#C7B995',
+        success: '#28613B',
+        error: '#973730',
+        warning: '#6E530C'
     };
     dark = {
-        primary: '#E6C982',
-        secondary: '#C7B991',
-        background: '#11151D',
-        text: '#F5F1E8',
-        textMuted: '#C2BEAF',
-        border: '#3A3B3B',
-        success: '#82C99C',
-        error: '#F08A8D',
-        warning: '#F0C66A'
+        primary: '#E7CB83',
+        secondary: '#C8BC9C',
+        background: '#1D2230',
+        text: '#F8EED3',
+        textMuted: '#C8C0AA',
+        border: '#50576B',
+        success: '#97DDB2',
+        error: '#F5ACA2',
+        warning: '#EDCE8A'
     };
     typography = {
-        fontFamily: 'Georgia, "Times New Roman", serif',
+        fontFamily: 'Arial, Helvetica, sans-serif',
         fontSizes: {
-            small: '14px',
+            small: '12px',
             medium: '16px',
-            large: '19px',
-            xlarge: '28px'
+            large: '22px',
+            xlarge: `${this.composition.body.titleSize}px`
         },
         fontWeights: {
             normal: 400,
@@ -53,37 +55,37 @@ class MidnightTheme {
         container: {
             borderColor: 'border',
             borderWidth: '1px',
-            borderRadius: '4px',
+            borderRadius: '0px',
             boxShadow: 'none'
         },
         header: {
             accentColor: 'primary',
             accentWidth: '3px',
-            horizontalPadding: '32px',
-            logoColor: 'primary',
-            logoFontFamily: 'Georgia, "Times New Roman", serif',
+            horizontalPadding: '44px',
+            logoColor: 'text',
+            logoFontFamily: 'Georgia, "Times New Roman", Times, serif',
             logoTextTransform: 'none',
-            logoLetterSpacing: '0.04em',
-            imageBorderRadius: '2px'
+            logoLetterSpacing: '0.02em',
+            imageBorderRadius: '0px'
         },
         body: {
-            accentColor: 'secondary',
-            accentWidth: '1px',
-            borderRadius: '4px',
+            accentColor: 'none',
+            accentWidth: '0px',
+            borderRadius: '0px',
             boxShadow: 'none',
-            horizontalPadding: '32px',
-            lineHeight: 1.65
+            horizontalPadding: '44px',
+            lineHeight: 1.8
         },
         button: {
             appearance: 'outline',
-            borderRadius: '2px',
-            borderWidth: '1px',
+            borderRadius: '0px',
+            borderWidth: '2px',
             boxShadow: 'none',
-            textTransform: 'uppercase',
-            letterSpacing: '0.08em'
+            textTransform: 'none',
+            letterSpacing: '0.01em'
         },
         footer: {
-            accentColor: 'secondary',
+            accentColor: 'border',
             accentWidth: '1px'
         }
     };

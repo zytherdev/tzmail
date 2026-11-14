@@ -1,42 +1,43 @@
-
 import { ThemeType } from '../../core/enums/theme.enum';
 import { ITheme, IThemeEmailStyles } from './theme.interface';
+import { getThemeComposition } from './theme-designs';
 
 export class SystemTheme implements ITheme {
   id = ThemeType.SYSTEM;
+  composition = getThemeComposition(this.id);
   name = 'System';
 
   light = {
-    primary: '#3b82f6',
-    secondary: '#6b7280',
-    background: '#ffffff',
-    text: '#111827',
-    textMuted: '#6b7280',
-    border: '#e5e7eb',
-    success: '#10b981',
-    error: '#ef4444',
-    warning: '#f59e0b'
+    primary: '#2754A5',
+    secondary: '#4D5B70',
+    background: '#F2F4F6',
+    text: '#171D29',
+    textMuted: '#535C6A',
+    border: '#B4BCC8',
+    success: '#28613B',
+    error: '#9F3933',
+    warning: '#74570D'
   };
 
   dark = {
-    primary: '#3b82f6',
-    secondary: '#9ca3af',
-    background: '#111827',
-    text: '#f9fafb',
-    textMuted: '#9ca3af',
-    border: '#374151',
-    success: '#10b981',
-    error: '#ef4444',
-    warning: '#f59e0b'
+    primary: '#89B5FF',
+    secondary: '#B4C5DB',
+    background: '#151B26',
+    text: '#F0F5FD',
+    textMuted: '#BBC6D5',
+    border: '#3B4659',
+    success: '#97DDB2',
+    error: '#F5ACA2',
+    warning: '#EDCE8A'
   };
 
   typography = {
-    fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif',
+    fontFamily: 'Arial, Helvetica, sans-serif',
     fontSizes: {
       small: '12px',
-      medium: '14px',
-      large: '16px',
-      xlarge: '20px'
+      medium: '16px',
+      large: '22px',
+      xlarge: `${this.composition.body.titleSize}px`
     },
     fontWeights: {
       normal: 400,
@@ -58,34 +59,37 @@ export class SystemTheme implements ITheme {
     container: {
       borderColor: 'border',
       borderWidth: '1px',
-      borderRadius: '8px',
-      boxShadow: '0 1px 3px rgba(0, 0, 0, 0.08)'
+      borderRadius: '0px',
+      boxShadow: 'none'
     },
     header: {
-      accentColor: 'primary',
-      accentWidth: '3px',
-      horizontalPadding: '24px',
-      logoColor: 'primary',
-      logoLetterSpacing: '0.01em',
-      imageBorderRadius: '4px'
+      accentColor: 'none',
+      accentWidth: '0px',
+      horizontalPadding: '32px',
+      logoColor: 'text',
+      logoFontFamily: '"Courier New", Courier, monospace',
+      logoTextTransform: 'uppercase',
+      logoLetterSpacing: '0.06em',
+      imageBorderRadius: '0px'
     },
     body: {
       accentColor: 'primary',
-      accentWidth: '2px',
-      borderRadius: '4px',
+      accentWidth: '1px',
+      borderRadius: '0px',
       boxShadow: 'none',
-      horizontalPadding: '24px',
+      horizontalPadding: '32px',
       lineHeight: 1.6
     },
     button: {
-      appearance: 'solid',
-      borderRadius: '6px',
-      borderWidth: '0px',
+      appearance: 'outline',
+      borderRadius: '0px',
+      borderWidth: '2px',
       boxShadow: 'none',
-      letterSpacing: '0.01em'
+      textTransform: 'uppercase',
+      letterSpacing: '0.06em'
     },
     footer: {
-      accentColor: 'secondary',
+      accentColor: 'border',
       accentWidth: '1px'
     }
   };

@@ -2,38 +2,40 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.GlassTheme = void 0;
 const theme_enum_1 = require("../../core/enums/theme.enum");
+const theme_designs_1 = require("./theme-designs");
 class GlassTheme {
     id = theme_enum_1.ThemeType.GLASS;
+    composition = (0, theme_designs_1.getThemeComposition)(this.id);
     name = 'Glass';
     light = {
-        primary: '#155E91',
-        secondary: '#526B7D',
-        background: '#F3F7FA',
-        text: '#183043',
-        textMuted: '#526B7D',
-        border: '#C9D7E1',
-        success: '#176B50',
-        error: '#A8323E',
-        warning: '#805400'
+        primary: '#205E7A',
+        secondary: '#485F6A',
+        background: '#EAF4F7',
+        text: '#1D3744',
+        textMuted: '#47606A',
+        border: '#A2BDC6',
+        success: '#28613B',
+        error: '#A03A33',
+        warning: '#75570D'
     };
     dark = {
-        primary: '#83CEF5',
-        secondary: '#B0C5D4',
-        background: '#12202D',
-        text: '#EDF5FA',
-        textMuted: '#B0C5D4',
-        border: '#344B5D',
-        success: '#71D2A9',
-        error: '#FF9297',
-        warning: '#FFD078'
+        primary: '#94D5E8',
+        secondary: '#BCD8E4',
+        background: '#172C35',
+        text: '#EAF7FC',
+        textMuted: '#B8D0DB',
+        border: '#42616E',
+        success: '#97DDB2',
+        error: '#F5ACA2',
+        warning: '#EDCE8A'
     };
     typography = {
-        fontFamily: 'Arial, Helvetica, "Segoe UI", sans-serif',
+        fontFamily: 'Arial, Helvetica, sans-serif',
         fontSizes: {
-            small: '14px',
+            small: '12px',
             medium: '16px',
-            large: '18px',
-            xlarge: '26px'
+            large: '22px',
+            xlarge: `${this.composition.body.titleSize}px`
         },
         fontWeights: {
             normal: 400,
@@ -49,35 +51,38 @@ class GlassTheme {
         xl: '44px'
     };
     emailStyles = {
-        maxWidthPx: 600,
+        maxWidthPx: 620,
         container: {
             borderColor: 'border',
             borderWidth: '1px',
-            borderRadius: '12px',
-            boxShadow: '0 2px 8px rgba(24, 48, 67, 0.08)'
+            borderRadius: '0px',
+            boxShadow: 'none'
         },
         header: {
-            accentColor: 'primary',
+            accentColor: 'secondary',
             accentWidth: '3px',
-            horizontalPadding: '28px',
-            logoColor: 'primary',
-            logoLetterSpacing: '0.04em',
-            imageBorderRadius: '6px'
+            horizontalPadding: '36px',
+            logoColor: 'text',
+            logoFontFamily: '"Courier New", Courier, monospace',
+            logoTextTransform: 'uppercase',
+            logoLetterSpacing: '0.06em',
+            imageBorderRadius: '0px'
         },
         body: {
-            accentColor: 'secondary',
-            accentWidth: '2px',
-            borderRadius: '8px',
+            accentColor: 'primary',
+            accentWidth: '1px',
+            borderRadius: '0px',
             boxShadow: 'none',
-            horizontalPadding: '28px',
-            lineHeight: 1.6
+            horizontalPadding: '36px',
+            lineHeight: 1.65
         },
         button: {
             appearance: 'outline',
-            borderRadius: '6px',
-            borderWidth: '1px',
+            borderRadius: '0px',
+            borderWidth: '2px',
             boxShadow: 'none',
-            letterSpacing: '0.02em'
+            textTransform: 'uppercase',
+            letterSpacing: '0.06em'
         },
         footer: {
             accentColor: 'border',

@@ -2,43 +2,45 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.AuroraTheme = void 0;
 const theme_enum_1 = require("../../core/enums/theme.enum");
+const theme_designs_1 = require("./theme-designs");
 class AuroraTheme {
     id = theme_enum_1.ThemeType.AURORA;
+    composition = (0, theme_designs_1.getThemeComposition)(this.id);
     name = 'Aurora';
     light = {
-        primary: '#06727D',
-        secondary: '#6750A4',
-        background: '#F3F8FA',
-        text: '#112B3A',
-        textMuted: '#536B78',
-        border: '#CBD9DF',
-        success: '#18794E',
-        error: '#B42332',
-        warning: '#8A5A00'
+        primary: '#08645E',
+        secondary: '#634491',
+        background: '#EDF8F3',
+        text: '#183932',
+        textMuted: '#4E6560',
+        border: '#9FBFB2',
+        success: '#28613B',
+        error: '#A33B34',
+        warning: '#7A5C0D'
     };
     dark = {
-        primary: '#5ADBC7',
-        secondary: '#B9A5FF',
-        background: '#0B1624',
-        text: '#EDF5F8',
-        textMuted: '#B0C0CA',
-        border: '#334454',
-        success: '#69D5A0',
-        error: '#FF8A8A',
-        warning: '#FFD166'
+        primary: '#7DE4CD',
+        secondary: '#C7AAEF',
+        background: '#142D2B',
+        text: '#EDFCF6',
+        textMuted: '#B4D2C9',
+        border: '#3C625B',
+        success: '#97DDB2',
+        error: '#F5ACA2',
+        warning: '#EDCE8A'
     };
     typography = {
-        fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif',
+        fontFamily: 'Arial, Helvetica, sans-serif',
         fontSizes: {
-            small: '14px',
+            small: '12px',
             medium: '16px',
-            large: '18px',
-            xlarge: '26px'
+            large: '22px',
+            xlarge: `${this.composition.body.titleSize}px`
         },
         fontWeights: {
             normal: 400,
             medium: 500,
-            bold: 600
+            bold: 700
         }
     };
     spacing = {
@@ -49,7 +51,7 @@ class AuroraTheme {
         xl: '36px'
     };
     emailStyles = {
-        maxWidthPx: 600,
+        maxWidthPx: 640,
         container: {
             borderColor: 'border',
             borderWidth: '1px',
@@ -57,30 +59,33 @@ class AuroraTheme {
             boxShadow: 'none'
         },
         header: {
-            accentColor: 'primary',
+            accentColor: 'secondary',
             accentWidth: '3px',
-            horizontalPadding: '24px',
-            logoColor: 'primary',
-            imageBorderRadius: '8px'
+            horizontalPadding: '32px',
+            logoColor: 'text',
+            logoFontFamily: 'Verdana, Geneva, Arial, sans-serif',
+            logoTextTransform: 'none',
+            logoLetterSpacing: '0.02em',
+            imageBorderRadius: '12px'
         },
         body: {
-            accentColor: 'primary',
-            accentWidth: '3px',
-            borderRadius: '10px',
+            accentColor: 'none',
+            accentWidth: '0px',
+            borderRadius: '8px',
             boxShadow: 'none',
-            horizontalPadding: '24px',
-            lineHeight: 1.55
+            horizontalPadding: '32px',
+            lineHeight: 1.65
         },
         button: {
             appearance: 'solid',
-            borderRadius: '6px',
-            borderWidth: '1px',
+            borderRadius: '999px',
+            borderWidth: '0px',
             boxShadow: 'none',
             textTransform: 'none',
             letterSpacing: '0.01em'
         },
         footer: {
-            accentColor: 'secondary',
+            accentColor: 'primary',
             accentWidth: '1px'
         }
     };

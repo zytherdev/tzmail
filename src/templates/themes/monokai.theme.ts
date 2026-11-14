@@ -1,42 +1,43 @@
-
 import { ThemeType } from '../../core/enums/theme.enum';
 import { ITheme, IThemeColors, ITypography, ISpacing, IThemeEmailStyles } from './theme.interface';
+import { getThemeComposition } from './theme-designs';
 
 export class MonokaiTheme implements ITheme {
   id = ThemeType.MONOKAI;
+  composition = getThemeComposition(this.id);
   name = 'Monokai';
   
   light: IThemeColors = {
-    primary: '#f92672',      
-    secondary: '#a6e22e',    
-    background: '#f9f9f9',    
-    text: '#272822',          
-    textMuted: '#75715e',     
-    border: '#e5e5e5',        
-    success: '#a6e22e',       
-    error: '#f92672',         
-    warning: '#fd971f'        
+    primary: '#AE1B57',
+    secondary: '#516B12',
+    background: '#F3F5E8',
+    text: '#24291B',
+    textMuted: '#555C42',
+    border: '#B5BE9A',
+    success: '#28613B',
+    error: '#A33B34',
+    warning: '#7D5D0E'
   };
   
   dark: IThemeColors = {
-    primary: '#f92672',       
-    secondary: '#a6e22e',     
-    background: '#272822',   
-    text: '#f8f8f2',          
-    textMuted: '#75715e',     
-    border: '#3e3d32',      
-    success: '#a6e22e',       
-    error: '#f92672',         
-    warning: '#fd971f'        
+    primary: '#FF79AB',
+    secondary: '#C5F36C',
+    background: '#22271B',
+    text: '#F1F8E0',
+    textMuted: '#C3CEAB',
+    border: '#465035',
+    success: '#97DDB2',
+    error: '#F5ACA2',
+    warning: '#EDCE8A'
   };
   
   typography: ITypography = {
-    fontFamily: '"SF Mono", "Monaco", "Inconsolata", "Fira Code", monospace',
+    fontFamily: '"Courier New", Courier, monospace',
     fontSizes: {
       small: '12px',
-      medium: '14px',
-      large: '16px',
-      xlarge: '20px'
+      medium: '16px',
+      large: '22px',
+      xlarge: `${this.composition.body.titleSize}px`
     },
     fontWeights: {
       normal: 400,
@@ -77,41 +78,42 @@ export class MonokaiTheme implements ITheme {
   };
 
   emailStyles: IThemeEmailStyles = {
-    maxWidthPx: 600,
+    maxWidthPx: 620,
     container: {
-      borderColor: 'border',
+      borderColor: 'primary',
       borderWidth: '1px',
-      borderRadius: '4px',
-      boxShadow: '0 2px 8px rgba(0, 0, 0, 0.08)'
+      borderRadius: '0px',
+      boxShadow: 'none'
     },
     header: {
-      accentColor: 'primary',
+      accentColor: 'secondary',
       accentWidth: '3px',
-      horizontalPadding: '24px',
+      horizontalPadding: '32px',
       logoColor: 'text',
-      logoFontFamily: '"SF Mono", "Monaco", "Inconsolata", "Fira Code", monospace',
-      logoLetterSpacing: '0.02em',
-      imageBorderRadius: '3px'
+      logoFontFamily: '"Courier New", Courier, monospace',
+      logoTextTransform: 'uppercase',
+      logoLetterSpacing: '0.06em',
+      imageBorderRadius: '0px'
     },
     body: {
-      accentColor: 'secondary',
-      accentWidth: '2px',
-      borderRadius: '4px',
+      accentColor: 'primary',
+      accentWidth: '1px',
+      borderRadius: '0px',
       boxShadow: 'none',
-      horizontalPadding: '24px',
-      lineHeight: 1.6
+      horizontalPadding: '32px',
+      lineHeight: 1.65
     },
     button: {
       appearance: 'solid',
-      borderRadius: '3px',
-      borderWidth: '1px',
+      borderRadius: '0px',
+      borderWidth: '0px',
       boxShadow: 'none',
       textTransform: 'uppercase',
-      letterSpacing: '0.04em'
+      letterSpacing: '0.06em'
     },
     footer: {
-      accentColor: 'secondary',
-      accentWidth: '2px'
+      accentColor: 'border',
+      accentWidth: '1px'
     }
   };
 }

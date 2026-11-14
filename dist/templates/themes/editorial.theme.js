@@ -2,38 +2,40 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.EditorialTheme = void 0;
 const theme_enum_1 = require("../../core/enums/theme.enum");
+const theme_designs_1 = require("./theme-designs");
 class EditorialTheme {
     id = theme_enum_1.ThemeType.EDITORIAL;
+    composition = (0, theme_designs_1.getThemeComposition)(this.id);
     name = 'Editorial';
     light = {
-        primary: '#8B342D',
-        secondary: '#5D5148',
-        background: '#F7F3EA',
-        text: '#292522',
-        textMuted: '#655C54',
-        border: '#D8CFC1',
-        success: '#286146',
-        error: '#963B34',
-        warning: '#75500F'
+        primary: '#86352B',
+        secondary: '#614F40',
+        background: '#F4EAD6',
+        text: '#31271E',
+        textMuted: '#5F4F40',
+        border: '#C9B89E',
+        success: '#265D39',
+        error: '#8F342E',
+        warning: '#694E0B'
     };
     dark = {
-        primary: '#E49A8E',
-        secondary: '#C8BBA9',
-        background: '#211F1C',
-        text: '#F3EEE4',
-        textMuted: '#C2B8AA',
-        border: '#4A433C',
-        success: '#91CBA5',
-        error: '#F0A097',
-        warning: '#E9C77B'
+        primary: '#EEAF92',
+        secondary: '#D7C298',
+        background: '#2D251A',
+        text: '#F9EED6',
+        textMuted: '#D0C1A4',
+        border: '#685740',
+        success: '#97DDB2',
+        error: '#F5ACA2',
+        warning: '#EDCE8A'
     };
     typography = {
-        fontFamily: 'Georgia, "Times New Roman", Times, serif',
+        fontFamily: 'Arial, Helvetica, sans-serif',
         fontSizes: {
-            small: '14px',
+            small: '12px',
             medium: '16px',
-            large: '19px',
-            xlarge: '28px'
+            large: '22px',
+            xlarge: `${this.composition.body.titleSize}px`
         },
         fontWeights: {
             normal: 400,
@@ -49,40 +51,41 @@ class EditorialTheme {
         xl: '36px'
     };
     emailStyles = {
-        maxWidthPx: 600,
+        maxWidthPx: 640,
         container: {
             borderColor: 'border',
             borderWidth: '1px',
-            borderRadius: '3px',
+            borderRadius: '0px',
             boxShadow: 'none'
         },
         header: {
             accentColor: 'primary',
             accentWidth: '2px',
-            horizontalPadding: '28px',
+            horizontalPadding: '40px',
             logoColor: 'primary',
             logoFontFamily: 'Georgia, "Times New Roman", Times, serif',
-            logoLetterSpacing: '0.02em',
-            imageBorderRadius: '2px'
+            logoTextTransform: 'uppercase',
+            logoLetterSpacing: '0.12em',
+            imageBorderRadius: '0px'
         },
         body: {
-            accentColor: 'primary',
-            accentWidth: '2px',
-            borderRadius: '2px',
+            accentColor: 'none',
+            accentWidth: '0px',
+            borderRadius: '0px',
             boxShadow: 'none',
-            horizontalPadding: '28px',
-            lineHeight: 1.65
+            horizontalPadding: '40px',
+            lineHeight: 1.75
         },
         button: {
-            appearance: 'solid',
-            borderRadius: '2px',
-            borderWidth: '1px',
+            appearance: 'outline',
+            borderRadius: '0px',
+            borderWidth: '2px',
             boxShadow: 'none',
             textTransform: 'uppercase',
-            letterSpacing: '0.04em'
+            letterSpacing: '0.08em'
         },
         footer: {
-            accentColor: 'secondary',
+            accentColor: 'border',
             accentWidth: '1px'
         }
     };

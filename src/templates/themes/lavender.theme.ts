@@ -1,46 +1,48 @@
 import { ThemeType } from '../../core/enums/theme.enum';
 import { ITheme, IThemeColors, ITypography, ISpacing, IThemeEmailStyles } from './theme.interface';
+import { getThemeComposition } from './theme-designs';
 
 export class LavenderTheme implements ITheme {
   id = ThemeType.LAVENDER;
+  composition = getThemeComposition(this.id);
   name = 'Lavender';
 
   light: IThemeColors = {
-    primary: '#623B8C',
-    secondary: '#8A4F68',
-    background: '#FCFAFF',
-    text: '#241B2B',
-    textMuted: '#62596A',
-    border: '#D9CFE2',
-    success: '#246B4A',
-    error: '#A12F45',
-    warning: '#815400'
+    primary: '#593982',
+    secondary: '#7F496E',
+    background: '#F1ECF8',
+    text: '#30213E',
+    textMuted: '#65536E',
+    border: '#BFAACE',
+    success: '#28613B',
+    error: '#9D3932',
+    warning: '#73560D'
   };
 
   dark: IThemeColors = {
-    primary: '#D7B8FF',
-    secondary: '#F0B5CA',
-    background: '#17121F',
-    text: '#F7F1FC',
-    textMuted: '#C3B8CC',
-    border: '#51465C',
-    success: '#8BD6AD',
-    error: '#FF9EAE',
-    warning: '#FFD27A'
+    primary: '#C5A5F4',
+    secondary: '#E4A5CA',
+    background: '#251A35',
+    text: '#F5ECFF',
+    textMuted: '#CDBCDC',
+    border: '#59466F',
+    success: '#97DDB2',
+    error: '#F5ACA2',
+    warning: '#EDCE8A'
   };
 
   typography: ITypography = {
-    fontFamily: 'Arial, "Segoe UI", system-ui, sans-serif',
+    fontFamily: 'Arial, Helvetica, sans-serif',
     fontSizes: {
-      small: '14px',
+      small: '12px',
       medium: '16px',
-      large: '18px',
-      xlarge: '26px'
+      large: '22px',
+      xlarge: `${this.composition.body.titleSize}px`
     },
     fontWeights: {
       normal: 400,
       medium: 500,
-      bold: 600
+      bold: 700
     }
   };
 
@@ -53,42 +55,42 @@ export class LavenderTheme implements ITheme {
   };
 
   emailStyles: IThemeEmailStyles = {
-    maxWidthPx: 600,
+    maxWidthPx: 580,
     container: {
       borderColor: 'border',
       borderWidth: '1px',
-      borderRadius: '16px',
+      borderRadius: '0px',
       boxShadow: 'none'
     },
     header: {
       accentColor: 'primary',
       accentWidth: '3px',
-      horizontalPadding: '28px',
+      horizontalPadding: '44px',
       logoColor: 'primary',
-      logoFontFamily: 'Arial, "Segoe UI", system-ui, sans-serif',
-      logoTextTransform: 'none',
-      logoLetterSpacing: '0.02em',
-      imageBorderRadius: '12px'
+      logoFontFamily: 'Georgia, "Times New Roman", Times, serif',
+      logoTextTransform: 'uppercase',
+      logoLetterSpacing: '0.12em',
+      imageBorderRadius: '0px'
     },
     body: {
-      accentColor: 'secondary',
-      accentWidth: '2px',
-      borderRadius: '12px',
+      accentColor: 'none',
+      accentWidth: '0px',
+      borderRadius: '0px',
       boxShadow: 'none',
-      horizontalPadding: '28px',
-      lineHeight: 1.65
+      horizontalPadding: '44px',
+      lineHeight: 1.8
     },
     button: {
-      appearance: 'solid',
-      borderRadius: '10px',
-      borderWidth: '1px',
+      appearance: 'outline',
+      borderRadius: '0px',
+      borderWidth: '2px',
       boxShadow: 'none',
-      textTransform: 'none',
-      letterSpacing: '0.01em'
+      textTransform: 'uppercase',
+      letterSpacing: '0.08em'
     },
     footer: {
-      accentColor: 'secondary',
-      accentWidth: '2px'
+      accentColor: 'border',
+      accentWidth: '1px'
     }
   };
 }

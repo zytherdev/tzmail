@@ -2,6 +2,7 @@ import { ThemeType } from '../../core/enums/theme.enum';
 import { ITheme, IThemeEmailStyles } from './theme.interface';
 export declare class SystemTheme implements ITheme {
     id: ThemeType;
+    composition: import("./theme-composition").IThemeComposition;
     name: string;
     light: {
         primary: string;

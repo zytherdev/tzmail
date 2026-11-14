@@ -36,7 +36,7 @@ export interface IBodyConfig {
   buttonUrl?: string;
   buttonVariant?: 'primary' | 'secondary' | 'success' | 'danger';
   alignment?: 'left' | 'center' | 'right';
-  /** CTA alignment; when omitted, follows body.alignment. */
+  /** CTA alignment; when omitted, follows body.alignment or the theme's default. */
   buttonAlignment?: 'left' | 'center' | 'right';
   backgroundColor?: string;
   textColor?: string;
@@ -45,6 +45,8 @@ export interface IBodyConfig {
 
 export interface IHeaderConfig {
   show: boolean;
+  /** Overrides the theme's header alignment. */
+  alignment?: 'left' | 'center' | 'right';
   logo?: {
     type: 'text' | 'image';
     text?: string;
@@ -52,7 +54,7 @@ export interface IHeaderConfig {
     alt?: string;
     size?: 'small' | 'medium' | 'large';
   };
-  /** Optional full-width header image rendered above the logo/content. */
+  /** Optional image; never required for a theme's visual identity. */
   heroImageUrl?: string;
   heroAlt?: string;
   backgroundColor?: string;
@@ -61,6 +63,8 @@ export interface IHeaderConfig {
 
 export interface IFooterConfig {
   show: boolean;
+  /** Overrides the theme's footer alignment. */
+  alignment?: 'left' | 'center' | 'right';
   links?: Array<{
     text: string;
     url: string;

@@ -2,38 +2,40 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.CorporateTheme = void 0;
 const theme_enum_1 = require("../../core/enums/theme.enum");
+const theme_designs_1 = require("./theme-designs");
 class CorporateTheme {
     id = theme_enum_1.ThemeType.CORPORATE;
+    composition = (0, theme_designs_1.getThemeComposition)(this.id);
     name = 'Corporate';
     light = {
-        primary: '#1e40af',
-        secondary: '#334155',
-        background: '#ffffff',
-        text: '#0f172a',
-        textMuted: '#475569',
-        border: '#e2e8f0',
-        success: '#059669',
-        error: '#dc2626',
-        warning: '#d97706'
+        primary: '#173F8A',
+        secondary: '#3C536F',
+        background: '#F0F5FB',
+        text: '#152942',
+        textMuted: '#4B5B73',
+        border: '#ADBDD2',
+        success: '#28613B',
+        error: '#9C3932',
+        warning: '#72550C'
     };
     dark = {
-        primary: '#3b82f6',
-        secondary: '#64748b',
-        background: '#0f172a',
-        text: '#f1f5f9',
-        textMuted: '#94a3b8',
-        border: '#1e293b',
-        success: '#10b981',
-        error: '#ef4444',
-        warning: '#f59e0b'
+        primary: '#9BBEFF',
+        secondary: '#C2D2E8',
+        background: '#14223B',
+        text: '#EDF3FF',
+        textMuted: '#B9C9E1',
+        border: '#405574',
+        success: '#97DDB2',
+        error: '#F5ACA2',
+        warning: '#EDCE8A'
     };
     typography = {
-        fontFamily: '"Playfair Display", "Georgia", "Times New Roman", serif',
+        fontFamily: 'Arial, Helvetica, sans-serif',
         fontSizes: {
             small: '12px',
-            medium: '14px',
-            large: '16px',
-            xlarge: '24px'
+            medium: '16px',
+            large: '22px',
+            xlarge: `${this.composition.body.titleSize}px`
         },
         fontWeights: {
             normal: 400,
@@ -104,38 +106,38 @@ class CorporateTheme {
         footerHeight: '120px'
     };
     emailStyles = {
-        maxWidthPx: 600,
+        maxWidthPx: 620,
         container: {
             borderColor: 'border',
             borderWidth: '1px',
-            borderRadius: '4px',
+            borderRadius: '0px',
             boxShadow: 'none'
         },
         header: {
             accentColor: 'primary',
             accentWidth: '3px',
-            horizontalPadding: '28px',
+            horizontalPadding: '36px',
             logoColor: 'text',
-            logoFontFamily: '"Playfair Display", "Georgia", "Times New Roman", serif',
-            logoTextTransform: 'uppercase',
-            logoLetterSpacing: '1px',
-            imageBorderRadius: '2px'
+            logoFontFamily: 'Georgia, "Times New Roman", Times, serif',
+            logoTextTransform: 'none',
+            logoLetterSpacing: '0.02em',
+            imageBorderRadius: '0px'
         },
         body: {
-            accentColor: 'secondary',
-            accentWidth: '1px',
-            borderRadius: '4px',
+            accentColor: 'none',
+            accentWidth: '0px',
+            borderRadius: '0px',
             boxShadow: 'none',
-            horizontalPadding: '32px',
-            lineHeight: 1.6
+            horizontalPadding: '36px',
+            lineHeight: 1.65
         },
         button: {
-            appearance: 'solid',
-            borderRadius: '2px',
-            borderWidth: '1px',
+            appearance: 'outline',
+            borderRadius: '0px',
+            borderWidth: '2px',
             boxShadow: 'none',
-            textTransform: 'uppercase',
-            letterSpacing: '0.5px'
+            textTransform: 'none',
+            letterSpacing: '0.01em'
         },
         footer: {
             accentColor: 'border',

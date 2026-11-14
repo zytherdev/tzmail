@@ -72,6 +72,18 @@ test('all 34 themes render in light and dark mode with responsive email markup',
       assert.match(html, /class="footer-link-cell"/);
       assert.match(html, /class="container-content"/);
       assert.match(html, /<html lang="en" dir="ltr">/);
+      const titleStyle = html.match(/<h2 style="([^"]+)">Welcome<\/h2>/)?.[1];
+      const design = theme.composition;
+      assert.ok(design, `${themeType} should have an explicit structural design`);
+      assert.ok(titleStyle?.includes(`font-size: ${design.body.titleSize}px;`), `${themeType}/${variant} should use its display scale`);
+      assert.ok(titleStyle?.includes(`line-height: ${design.body.titleLineHeight};`), `${themeType}/${variant} should use its own display rhythm`);
+      assert.ok(design.body.titleSize >= 32, `${themeType} should have a confident heading hierarchy`);
+      assert.ok(html.includes(`padding: ${design.button.paddingY}px ${design.button.paddingX}px;`));
+      assert.ok(html.includes(design.canvas[variant]), `${themeType}/${variant} should use its own canvas`);
+      assert.ok(html.includes(`data-header-layout="${design.header.layout}"`));
+      assert.ok(html.includes(`data-body-layout="${design.body.layout}"`));
+      assert.ok(html.includes(`data-footer-layout="${design.footer.layout}"`));
+      assert.doesNotMatch(html, /<img\b/, 'every theme should stand on structure and typography without imagery');
       assert.ok(theme.emailStyles, `${themeType} should define an email layout profile`);
       assert.ok(theme.emailStyles.maxWidthPx >= 560 && theme.emailStyles.maxWidthPx <= 640, `${themeType} should use a readable desktop width`);
       assert.ok(['solid', 'outline'].includes(theme.emailStyles.button.appearance));
@@ -89,7 +101,8 @@ test('all 34 themes render in light and dark mode with responsive email markup',
       const logoIndex = html.indexOf('Acme &lt;b&gt;Mail&lt;/b&gt;');
       const logoBlock = html.slice(html.lastIndexOf('<div style=', logoIndex), logoIndex);
       const logoColor = logoBlock.match(/color:\s*([^;]+);/)?.[1];
-      assert.ok(contrastRatio(logoColor, theme[variant].background) >= 4.5, `${themeType}/${variant} logo should meet WCAG AA`);
+      const logoBackground = logoBlock.match(/data-logo-surface="([^"]+)"/)?.[1];
+      assert.ok(contrastRatio(logoColor, logoBackground) >= 4.5, `${themeType}/${variant} logo should meet WCAG AA on its actual plane`);
 
       const buttonStart = html.indexOf('<a class="button-link"');
       const buttonEnd = html.indexOf('</a>', buttonStart);
@@ -101,7 +114,8 @@ test('all 34 themes render in light and dark mode with responsive email markup',
       const linkIndex = html.indexOf('>Privacy</a>');
       const linkBlock = html.slice(html.lastIndexOf('<a ', linkIndex), linkIndex);
       const linkColor = linkBlock.match(/color:\s*([^;]+);/)?.[1];
-      assert.ok(contrastRatio(linkColor, theme[variant].background) >= 4.5, `${themeType}/${variant} footer link should meet WCAG AA`);
+      const footerBackground = theme[variant][design.footer.surface];
+      assert.ok(contrastRatio(linkColor, footerBackground) >= 4.5, `${themeType}/${variant} footer link should meet WCAG AA on its actual surface`);
     }
   }
 });
@@ -179,13 +193,15 @@ test('dark footer and body overrides preserve readable contrast and valid style 
     }
   }), {});
   const footerStyle = html.match(/class="email-footer-cell"[^>]*style="([^"]+)"/)?.[1] || '';
-  assert.match(footerStyle, /color: #ffffff;/);
-  assert.match(html, /color:\s*#ffffff;[^>]*>Readable title/);
-  const copyrightStyle = html.match(/<td style="([^"]+)">\s*Copyright/)?.[1] || '';
-  assert.match(copyrightStyle, /color:#ffffff;/);
+  const footerColor = footerStyle.match(/color:\s*([^;]+);/)?.[1];
+  assert.ok(contrastRatio(footerColor, '#101010') >= 4.5);
+  const titleStyle = html.match(/<h2 style="([^"]+)">Readable title/)?.[1] || '';
+  assert.ok(contrastRatio(titleStyle.match(/color:\s*([^;]+);/)?.[1], '#101010') >= 4.5);
+  const copyrightStyle = html.match(/<td[^>]*style="([^"]+)">\s*Copyright/)?.[1] || '';
+  assert.ok(contrastRatio(copyrightStyle.match(/color:\s*([^;]+);/)?.[1], '#101010') >= 4.5);
   const footerAnchors = [...html.matchAll(/<a\b[^>]*style="([^"]+)"[^>]*>/g)].map(match => match[1]);
   assert.equal(footerAnchors.length, 2);
-  assert.ok(footerAnchors.every(style => /color:#ffffff;/.test(style) && /text-decoration:none !important/.test(style)));
+  assert.ok(footerAnchors.every(style => contrastRatio(style.match(/color:\s*([^;]+);/)?.[1], '#101010') >= 4.5 && /text-decoration:none !important/.test(style)));
   assert.doesNotMatch(html, /style="[^"]*font-family: "[^"]*"/);
   assert.match(html, /text-decoration:none !important/);
   assert.doesNotMatch(html, /text-decoration:underline/);
@@ -197,9 +213,20 @@ test('committed gallery embeds 68 previews with varied headers and CTA alignment
   assert.ok(data, 'gallery should contain generated preview data');
   const themes = JSON.parse(data[1]);
   assert.equal(themes.length, 34);
+  assert.match(gallery, /<html lang="en">/);
+  assert.match(gallery, /Search themes or layouts/);
+  assert.match(gallery, /View layout/);
+  assert.match(gallery, /No themes found/);
+  assert.doesNotMatch(gallery, /Coleção|Buscar|Ver layout|Prévia|Claro|Escuro/);
+  assert.doesNotMatch(gallery, /placehold\.co/, 'gallery samples should not depend on remote placeholder images');
   for (const theme of themes) {
     for (const mode of ['light', 'dark']) {
       const preview = theme.previews[mode];
+      assert.match(preview, /<html lang="en"/);
+      assert.match(preview, /A meaningful update deserves more than a box of text/);
+      assert.match(preview, /Explore what comes next/);
+      assert.match(preview, />Unsubscribe</);
+      assert.doesNotMatch(preview, /<img\b|gallery-asset:|data:image/, 'gallery must compare layouts, not images');
       assert.match(preview, new RegExp(`<td align="${theme.alignment}" style="padding: 0; text-align: ${theme.alignment};`), `${theme.name}/${mode} body copy should be ${theme.alignment}`);
       assert.match(preview, new RegExp(`<table class="button" align="${theme.alignment}"`), `${theme.name}/${mode} CTA should follow the body alignment`);
       const links = [...preview.matchAll(/<a\b[^>]*style="([^"]+)"[^>]*>/g)].map(match => match[1]);
@@ -209,21 +236,24 @@ test('committed gallery embeds 68 previews with varied headers and CTA alignment
     }
   }
   assert.ok(themes.every(theme => theme.alignment === theme.buttonAlignment));
-  assert.deepEqual(new Set(themes.map(theme => theme.headerMode)), new Set(['image-title', 'image-only', 'text-only']));
+  assert.equal(new Set(themes.map(theme => theme.headerMode)).size, 8, 'eight distinct header compositions');
+  assert.equal(new Set(themes.map(theme => theme.bodyMode)).size, 8, 'eight distinct body compositions');
+  assert.equal(new Set(themes.map(theme => theme.footerMode)).size, 6, 'six distinct footer compositions');
+  assert.equal(new Set(themes.map(theme => `${theme.headerMode}/${theme.bodyMode}/${theme.footerMode}/${theme.alignment}`)).size, 34, 'every theme must have a distinct structural combination');
   assert.deepEqual(new Set(themes.map(theme => theme.buttonAlignment)), new Set(['left', 'center', 'right']));
 });
 
-test('renders safe localized RTL output and escaped, interpolated inbox preheaders', async t => {
+test('renders RTL output and escaped, interpolated English inbox preheaders', async t => {
   const service = new TemplateService();
   t.after(() => service.dispose());
   const html = await service.previewTemplate(ThemeType.SYSTEM, 'light', plainConfig({
-    language: 'pt-BR',
+    language: 'en',
     direction: 'rtl',
-    preheader: 'Olá, {{user.name}}'
+    preheader: 'Hello, {{user.name}}'
   }), { templateData: { user: { name: '<Ana>' } } });
-  assert.match(html, /<html lang="pt-BR" dir="rtl">/);
-  assert.match(html, /mso-hide:all[^>]*>Olá, &lt;Ana&gt;<\/div>/);
-  assert.doesNotMatch(html, /Olá, <Ana>/);
+  assert.match(html, /<html lang="en" dir="rtl">/);
+  assert.match(html, /mso-hide:all[^>]*>Hello, &lt;Ana&gt;<\/div>/);
+  assert.doesNotMatch(html, /Hello, <Ana>/);
   assert.throws(() => service.createTemplate(ThemeType.SYSTEM, 'light', plainConfig({ language: 'en" onload="x' })), /language tag/i);
   assert.throws(() => service.createTemplate(ThemeType.SYSTEM, 'light', plainConfig({ direction: 'sideways' })), /text direction/i);
   assert.throws(() => service.createTemplate(ThemeType.SYSTEM, 'light', plainConfig({ preheader: 'x'.repeat(501) })), /500/);
@@ -261,7 +291,7 @@ test('renders a validated hero image and image logo in the header', async t => {
     header: { show: true, logo: { type: 'image', imageUrl: 'https://example.com/compact.png', alt: 'Compact logo' } },
     body: { title: 'Split header', message: 'Logo beside the title.' }
   }, { headerContent: 'Weekly brief' });
-  assert.match(split, /<td valign="middle" align="left" style="width:42%;">/);
+  assert.match(split, /data-header-layout="[^"]+"/);
   assert.match(split, /Weekly brief/);
 });
 

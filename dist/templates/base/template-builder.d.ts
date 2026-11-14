@@ -1,33 +1,26 @@
 import { ITemplateConfig } from '../../core/interfaces/template.interface';
 import { ITheme } from '../themes/theme.interface';
+/** Email-safe structure is composed from the theme, never from a fixed theme-id layout map. */
 export declare class TemplateBuilder {
-    private template;
     private theme;
     private config;
     private variant;
+    private preheader;
+    private header;
+    private footer;
+    private content;
+    private button;
     constructor(theme: ITheme, config: ITemplateConfig, variant: 'light' | 'dark');
-    private get emailStyles();
+    private get design();
     buildPreheader(): this;
-    private headerAlignment;
-    private footerAlignment;
-    private isEditorialLayout;
-    private visualPlan;
-    private headerLayout;
-    private bodyLayout;
-    private footerLayout;
     buildHeader(content?: string): this;
-    private buildLogo;
+    buildMessage(title: string, message: string, fontSize: number): this;
+    /** Explicitly trusted HTML still receives the theme's outer composition, not rewritten headings. */
     buildBody(content: string): this;
-    private formatCorporateContent;
-    private formatMinimalContent;
     private highlightCode;
     private applySyntaxHighlighting;
     buildButton(text: string, url: string, variant?: 'primary' | 'secondary' | 'success' | 'danger'): this;
     buildFooter(): this;
-    private buildFooterLinks;
-    private linkDecorationStyle;
-    private buildSocialLinks;
-    private getSocialIcon;
     build(): string;
 }
 //# sourceMappingURL=template-builder.d.ts.map

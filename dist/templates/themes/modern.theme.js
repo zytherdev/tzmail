@@ -2,43 +2,45 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.ModernTheme = void 0;
 const theme_enum_1 = require("../../core/enums/theme.enum");
+const theme_designs_1 = require("./theme-designs");
 class ModernTheme {
     id = theme_enum_1.ThemeType.MODERN;
+    composition = (0, theme_designs_1.getThemeComposition)(this.id);
     name = 'Modern';
     light = {
-        primary: '#0f172a',
-        secondary: '#64748b',
-        background: '#ffffff',
-        text: '#0f172a',
-        textMuted: '#64748b',
-        border: '#e2e8f0',
-        success: '#10b981',
-        error: '#ef4444',
-        warning: '#f59e0b'
+        primary: '#202D40',
+        secondary: '#42566B',
+        background: '#F5F6F8',
+        text: '#162235',
+        textMuted: '#4A5567',
+        border: '#A7B4C4',
+        success: '#275F3A',
+        error: '#92352F',
+        warning: '#6B500C'
     };
     dark = {
-        primary: '#38bdf8',
-        secondary: '#94a3b8',
-        background: '#0f172a',
-        text: '#f1f5f9',
-        textMuted: '#94a3b8',
-        border: '#1e293b',
-        success: '#34d399',
-        error: '#f87171',
-        warning: '#fbbf24'
+        primary: '#ACC4E6',
+        secondary: '#8FC4DB',
+        background: '#141F2D',
+        text: '#EFF5FF',
+        textMuted: '#BDCBDF',
+        border: '#3B4E65',
+        success: '#97DDB2',
+        error: '#F5ACA2',
+        warning: '#EDCE8A'
     };
     typography = {
-        fontFamily: '"Inter", "SF Pro Display", "Segoe UI", system-ui, sans-serif',
+        fontFamily: 'Arial, Helvetica, sans-serif',
         fontSizes: {
-            small: '13px',
-            medium: '15px',
-            large: '17px',
-            xlarge: '24px'
+            small: '12px',
+            medium: '16px',
+            large: '22px',
+            xlarge: `${this.composition.body.titleSize}px`
         },
         fontWeights: {
             normal: 400,
             medium: 500,
-            bold: 600
+            bold: 700
         }
     };
     spacing = {
@@ -49,40 +51,42 @@ class ModernTheme {
         xl: '48px'
     };
     emailStyles = {
-        maxWidthPx: 600,
+        maxWidthPx: 640,
         container: {
             borderColor: 'border',
             borderWidth: '1px',
-            borderRadius: '12px',
+            borderRadius: '0px',
             boxShadow: 'none'
         },
         header: {
-            accentColor: 'primary',
+            accentColor: 'secondary',
             accentWidth: '3px',
-            horizontalPadding: '24px',
-            logoColor: 'primary',
-            logoFontFamily: '"Inter", "Segoe UI", sans-serif',
+            horizontalPadding: '40px',
+            logoColor: 'text',
+            logoFontFamily: 'Arial, Helvetica, sans-serif',
+            logoTextTransform: 'none',
             logoLetterSpacing: '0.02em',
-            imageBorderRadius: '8px'
+            imageBorderRadius: '0px'
         },
         body: {
-            accentColor: 'primary',
-            accentWidth: '2px',
-            borderRadius: '8px',
+            accentColor: 'none',
+            accentWidth: '0px',
+            borderRadius: '0px',
             boxShadow: 'none',
-            horizontalPadding: '24px',
-            lineHeight: 1.55
+            horizontalPadding: '40px',
+            lineHeight: 1.6
         },
         button: {
             appearance: 'solid',
-            borderRadius: '8px',
-            borderWidth: '1px',
+            borderRadius: '0px',
+            borderWidth: '0px',
             boxShadow: 'none',
+            textTransform: 'none',
             letterSpacing: '0.01em'
         },
         footer: {
-            accentColor: 'secondary',
-            accentWidth: '1px'
+            accentColor: 'none',
+            accentWidth: '0px'
         }
     };
     gradients = {

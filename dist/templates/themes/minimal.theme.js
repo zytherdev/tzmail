@@ -2,43 +2,45 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.MinimalTheme = void 0;
 const theme_enum_1 = require("../../core/enums/theme.enum");
+const theme_designs_1 = require("./theme-designs");
 class MinimalTheme {
     id = theme_enum_1.ThemeType.MINIMAL;
+    composition = (0, theme_designs_1.getThemeComposition)(this.id);
     name = 'Minimal';
     light = {
-        primary: '#000000',
-        secondary: '#404040',
-        background: '#ffffff',
-        text: '#111111',
-        textMuted: '#666666',
-        border: '#e5e5e5',
-        success: '#22c55e',
-        error: '#ef4444',
-        warning: '#f97316'
+        primary: '#151515',
+        secondary: '#454545',
+        background: '#FFFFFF',
+        text: '#161616',
+        textMuted: '#595959',
+        border: '#BBBBBB',
+        success: '#28613B',
+        error: '#A33B34',
+        warning: '#80600E'
     };
     dark = {
-        primary: '#ffffff',
-        secondary: '#a3a3a3',
-        background: '#000000',
-        text: '#ffffff',
-        textMuted: '#737373',
-        border: '#262626',
-        success: '#22c55e',
-        error: '#ef4444',
-        warning: '#f97316'
+        primary: '#EEEEEE',
+        secondary: '#C4C4C4',
+        background: '#181818',
+        text: '#FAFAFA',
+        textMuted: '#C6C6C6',
+        border: '#484848',
+        success: '#97DDB2',
+        error: '#F5ACA2',
+        warning: '#EDCE8A'
     };
     typography = {
-        fontFamily: '"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
+        fontFamily: 'Arial, Helvetica, sans-serif',
         fontSizes: {
-            small: '13px',
-            medium: '15px',
-            large: '17px',
-            xlarge: '21px'
+            small: '12px',
+            medium: '16px',
+            large: '22px',
+            xlarge: `${this.composition.body.titleSize}px`
         },
         fontWeights: {
             normal: 400,
             medium: 500,
-            bold: 600
+            bold: 700
         }
     };
     spacing = {
@@ -52,37 +54,39 @@ class MinimalTheme {
         maxWidthPx: 600,
         container: {
             borderColor: 'border',
-            borderWidth: '1px',
-            borderRadius: '2px',
+            borderWidth: '0px',
+            borderRadius: '0px',
             boxShadow: 'none'
         },
         header: {
-            accentColor: 'primary',
-            accentWidth: '2px',
-            horizontalPadding: '24px',
+            accentColor: 'none',
+            accentWidth: '0px',
+            horizontalPadding: '44px',
             logoColor: 'text',
+            logoFontFamily: 'Arial, Helvetica, sans-serif',
+            logoTextTransform: 'none',
             logoLetterSpacing: '0.02em',
             imageBorderRadius: '0px'
         },
         body: {
-            accentColor: 'border',
-            accentWidth: '1px',
-            borderRadius: '2px',
+            accentColor: 'none',
+            accentWidth: '0px',
+            borderRadius: '0px',
             boxShadow: 'none',
-            horizontalPadding: '24px',
-            lineHeight: 1.6
+            horizontalPadding: '44px',
+            lineHeight: 1.7
         },
         button: {
             appearance: 'outline',
-            borderRadius: '2px',
-            borderWidth: '1px',
+            borderRadius: '0px',
+            borderWidth: '2px',
             boxShadow: 'none',
-            textTransform: 'none',
-            letterSpacing: '0.02em'
+            textTransform: 'uppercase',
+            letterSpacing: '0.08em'
         },
         footer: {
-            accentColor: 'border',
-            accentWidth: '1px'
+            accentColor: 'none',
+            accentWidth: '0px'
         }
     };
     // cores minimalistas

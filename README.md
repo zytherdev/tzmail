@@ -64,7 +64,7 @@ const template = mailer.getTemplateService().createTemplate(
 );
 
 const result = await mailer.sendEmail({
-  to: 'pessoa@example.com',
+  to: 'person@example.com',
   subject: 'Your account is ready',
   template
 });
@@ -326,27 +326,50 @@ The library includes 34 themes, each with `light` and `dark` variants. The origi
 
 All themes use fluid, table-based email markup. On screens up to 600px wide, calls to action expand to the available width and footer links stack vertically. Use `TemplateFactory.listThemes()` to enumerate available themes and `TemplateFactory.getThemeInfo(theme)` to read each theme's description and features.
 
-Open the standalone [interactive theme gallery](examples/theme-gallery.html) in a browser to compare all 34 themes and 68 light/dark previews, switch between variants, search by theme name, and inspect expanded previews. The gallery also demonstrates image-plus-title, image-only, and text-only headers, plus left, center, and right CTA alignment. It embeds sample emails rendered by the current `TemplateFactory`; the sample image URLs use `placehold.co`, so an internet connection is needed to display those images.
+The standalone [interactive theme gallery](examples/theme-gallery.html) compares all 34 themes in light and dark appearances using the same English sample content. Browse full email layouts, search by theme or layout, and open desktop or mobile previews.
 
-Each built-in `ITheme` includes an `emailStyles` profile for desktop width, container surfaces, header/body/footer accents, spacing, and solid or outline CTAs. In addition, themes select distinct structural compositions for their header, body, and footer: split, stacked, editorial, compact, hero, rail, and band headers; open, card, inset, callout, frame, editorial, and technical body treatments; and split, bar, compact, minimal, stacked, and editorial footers. Color accents are palette references, so each profile adapts to light and dark variants. Custom `ITheme` implementations can omit `emailStyles` and receive conservative email-safe defaults. The renderer avoids CSS gradients, hover-only behavior, animation, and glass effects that are unreliable in email clients.
+Choose a theme for its complete visual style: each theme coordinates the header, body, button, footer, colors, type, and spacing. Theme defaults provide deliberate section alignment. Override it with `header.alignment`, `body.alignment`, or `footer.alignment` (`left`, `center`, or `right`). The CTA follows body alignment unless `body.buttonAlignment` is explicit.
 
-Theme-selected or caller-supplied logo, header, body, and footer text colors are checked against their effective backgrounds. If a requested foreground would be unreadable, the renderer substitutes a WCAG AA-safe fallback while preserving the theme accent on borders and fills.
+```typescript
+const html = await mailer.getTemplateService().previewTemplate(
+  ThemeType.EDITORIAL,
+  'light',
+  {
+    header: { show: true, logo: { type: 'text', text: 'Field Notes' } },
+    body: {
+      title: 'A more thoughtful arrival.',
+      message: 'Give the idea room, the message clarity, and the next step a clear purpose.',
+      buttonText: 'Explore what comes next',
+      buttonUrl: 'https://example.com/updates',
+      alignment: 'left'
+    },
+    footer: {
+      show: true,
+      links: [{ text: 'Preferences', url: 'https://example.com/preferences' }],
+      unsubscribeText: 'Unsubscribe',
+      unsubscribeUrl: 'https://example.com/unsubscribe'
+    }
+  }
+);
+```
 
-Body copy uses `body.alignment` (`left`, `center`, or `right`). The CTA follows it by default; set `body.buttonAlignment` only when an intentionally independent CTA position is required. In a coordinated layout, use the same value for both so left text has a left CTA, centered text has a centered CTA, and right-aligned text has a right CTA. `body.backgroundColor` and `body.textColor` can override the theme's body palette. Footer navigation and unsubscribe links have no underline by default. Set `linkDecoration: 'underline'` when underlined links are preferred; the setting applies consistently to both.
+Logo and hero images are optional; every theme has a complete text-first layout. Section `backgroundColor` and `textColor` overrides are supported. When a requested color would be hard to read against its background, the renderer selects a more legible foreground. Footer links are unlined by default; use `linkDecoration: 'underline'` to underline footer navigation and unsubscribe links consistently.
 
-Templates also support `language` (default `en`), `direction` (`ltr`, `rtl`, or `auto`; default `ltr`), and a hidden `preheader` (up to 500 printable characters) for inbox previews. Preheaders support the same escaped per-recipient placeholders as other text fields. After changing a theme or the renderer, refresh the gallery's embedded samples with `npm run gallery:build`.
+See the [theme gallery and customization guide](docs/theme-guide.md) for tips on previewing, choosing, and customizing themes.
+
+Templates also support `language` (default `en`), `direction` (`ltr`, `rtl`, or `auto`; default `ltr`), and a hidden `preheader` (up to 500 printable characters) for inbox previews. Preheaders support the same escaped per-recipient placeholders as other text fields.
 
 ```typescript
 const html = await mailer.getTemplateService().previewTemplate(
   ThemeType.MIDNIGHT,
   'dark',
   {
-    language: 'ar',
-    direction: 'rtl',
-    preheader: 'مرحبًا، {{user.firstName}} — your account update is ready.',
+    language: 'en',
+    direction: 'ltr',
+    preheader: 'Hello, {{user.firstName}} — your account update is ready.',
     body: { title: 'Welcome, {{user.firstName}}', message: 'Your update is available.' }
   },
-  { templateData: { user: { firstName: 'Samira' } } }
+  { templateData: { user: { firstName: 'Sam' } } }
 );
 ```
 
@@ -427,7 +450,7 @@ The cache and history are local to the process, not distributed. Call `service.d
 - Action and link URLs accept absolute `https:`, `http:`, or `mailto:` URLs; images/logos and social links accept `https:`/`http:`. Schemes such as `javascript:` and `data:` and attributes containing injection characters are rejected.
 - Colors and some style values are validated. The library's validation does not replace business validation or sanitization of custom HTML.
 
-For per-recipient customization, use `{{placeholder}}` in template text and pass `templateData` in the message. Nested keys are supported (`{{user.firstName}}`); leaf values must be primitives (`string`, `number`, `boolean`, or `null`), and a placeholder without a value causes rendering to fail instead of sending incomplete text. Values inserted into text are escaped; insertions into `body.content` are escaped before being added to the trusted HTML; URLs are validated after interpolation.
+For per-recipient customization, use `{{placeholder}}` in template text and pass `templateData` in the message. Nested keys are supported (`{{user.firstName}}`); leaf values must be primitives (`string`, `number`, `boolean`, or `null`), and a placeholder without a value causes rendering to fail instead of sending incomplete text. Values inserted into text are escaped; insertions into `body.content` are escaped before being added to the trusted HTML. Generated URL configuration fields (CTA, logo/hero images, footer links, social links and unsubscribe URL) are validated after interpolation. URL-valued placeholders inside explicitly trusted `body.content`/`body.html` remain the caller's validation responsibility; HTML escaping is not URL-scheme validation.
 
 ```typescript
 await mailer.sendEmail({
@@ -486,18 +509,6 @@ type IEmailSendResult = {
 ```
 
 `success` is `true` only when the transport reports no rejected recipients. `partial` means partial acceptance and rejection; route these cases to explicit handling/retry in the application. An API or server accepting the message does not prove final delivery, that it was read, or that it avoided spam.
-
-## Development and validation
-
-```bash
-npm ci
-npm run lint
-npm run typecheck
-npm test
-npm pack --dry-run
-```
-
-Tests use the native `node:test` runner and fake transports; they do not send real emails. The GitHub Actions pipeline runs lint, typecheck, build/tests, and package inspection on pushes, pull requests, and before publishing an npm release.
 
 ## Production considerations
 

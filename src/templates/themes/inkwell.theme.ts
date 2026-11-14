@@ -1,10 +1,84 @@
 import { ThemeType } from '../../core/enums/theme.enum';
 import { ITheme, IThemeColors, ITypography, ISpacing, IThemeEmailStyles } from './theme.interface';
+import { getThemeComposition } from './theme-designs';
 export class InkwellTheme implements ITheme {
-  id = ThemeType.INKWELL; name = 'Inkwell';
-  light: IThemeColors = { primary: '#18181b', secondary: '#52525b', background: '#fafafa', text: '#27272a', textMuted: '#71717a', border: '#d4d4d8', success: '#166534', error: '#b91c1c', warning: '#a16207' };
-  dark: IThemeColors = { primary: '#fafafa', secondary: '#d4d4d8', background: '#18181b', text: '#fafafa', textMuted: '#d4d4d8', border: '#52525b', success: '#86efac', error: '#fca5a5', warning: '#fde68a' };
-  typography: ITypography = { fontFamily: 'Georgia, Times New Roman, serif', fontSizes: { small: '12px', medium: '15px', large: '18px', xlarge: '23px' }, fontWeights: { normal: 400, medium: 500, bold: 700 } };
+  id = ThemeType.INKWELL;
+  composition = getThemeComposition(this.id);
+  name = 'Inkwell';
+  light: IThemeColors = {
+    primary: '#262829',
+    secondary: '#4D5051',
+    background: '#F0EFEB',
+    text: '#292B2C',
+    textMuted: '#565656',
+    border: '#B5B3AD',
+    success: '#28613B',
+    error: '#963630',
+    warning: '#6D520C'
+  };
+  dark: IThemeColors = {
+    primary: '#E5E4DD',
+    secondary: '#C3C7C7',
+    background: '#242627',
+    text: '#F4F4EB',
+    textMuted: '#C8CAC6',
+    border: '#575C5A',
+    success: '#97DDB2',
+    error: '#F5ACA2',
+    warning: '#EDCE8A'
+  };
+  typography: ITypography = {
+    fontFamily: 'Arial, Helvetica, sans-serif',
+    fontSizes: {
+      small: '12px',
+      medium: '16px',
+      large: '22px',
+      xlarge: `${this.composition.body.titleSize}px`
+    },
+    fontWeights: {
+      normal: 400,
+      medium: 500,
+      bold: 700
+    }
+  };
   spacing: ISpacing = { xs: '4px', sm: '9px', md: '17px', lg: '25px', xl: '36px' };
-  emailStyles: IThemeEmailStyles = { maxWidthPx: 580, container: { borderColor: 'border', borderWidth: '1px', borderRadius: '0px', boxShadow: 'none' }, header: { accentColor: 'primary', accentWidth: '3px', horizontalPadding: '26px', logoColor: 'text', logoLetterSpacing: '0.02em', imageBorderRadius: '0px' }, body: { accentColor: 'primary', accentWidth: '2px', borderRadius: '0px', boxShadow: 'none', horizontalPadding: '26px', lineHeight: 1.7 }, button: { appearance: 'solid', borderRadius: '0px', borderWidth: '0px', boxShadow: 'none' }, footer: { accentColor: 'primary', accentWidth: '2px' } };
+  emailStyles: IThemeEmailStyles = {
+    maxWidthPx: 620,
+    container: {
+      borderColor: 'primary',
+      borderWidth: '1px',
+      borderRadius: '0px',
+      boxShadow: 'none'
+    },
+    header: {
+      accentColor: 'primary',
+      accentWidth: '2px',
+      horizontalPadding: '36px',
+      logoColor: 'text',
+      logoFontFamily: 'Georgia, "Times New Roman", Times, serif',
+      logoTextTransform: 'uppercase',
+      logoLetterSpacing: '0.12em',
+      imageBorderRadius: '0px'
+    },
+    body: {
+      accentColor: 'primary',
+      accentWidth: '1px',
+      borderRadius: '0px',
+      boxShadow: 'none',
+      horizontalPadding: '36px',
+      lineHeight: 1.75
+    },
+    button: {
+      appearance: 'outline',
+      borderRadius: '0px',
+      borderWidth: '2px',
+      boxShadow: 'none',
+      textTransform: 'uppercase',
+      letterSpacing: '0.08em'
+    },
+    footer: {
+      accentColor: 'border',
+      accentWidth: '1px'
+    }
+  };
 }

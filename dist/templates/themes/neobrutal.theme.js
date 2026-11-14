@@ -2,43 +2,45 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.NeoBrutalTheme = void 0;
 const theme_enum_1 = require("../../core/enums/theme.enum");
+const theme_designs_1 = require("./theme-designs");
 class NeoBrutalTheme {
     id = theme_enum_1.ThemeType.NEOBRUTAL;
+    composition = (0, theme_designs_1.getThemeComposition)(this.id);
     name = 'Neo Brutal';
     light = {
-        primary: '#1745C6',
-        secondary: '#FFD400',
-        background: '#FFFFFF',
-        text: '#111111',
-        textMuted: '#505050',
-        border: '#767676',
-        success: '#146C2E',
-        error: '#B42318',
-        warning: '#805B00'
+        primary: '#2148AF',
+        secondary: '#FFE05C',
+        background: '#FFF7CC',
+        text: '#181D26',
+        textMuted: '#555346',
+        border: '#B4A95D',
+        success: '#28613B',
+        error: '#A33B34',
+        warning: '#7B5C0D'
     };
     dark = {
-        primary: '#FFD400',
-        secondary: '#4F7DFF',
-        background: '#111111',
-        text: '#FAFAFA',
-        textMuted: '#C4C4C4',
-        border: '#777777',
-        success: '#75D99A',
-        error: '#FF8B82',
-        warning: '#FFD166'
+        primary: '#91A9FF',
+        secondary: '#FFE05C',
+        background: '#202117',
+        text: '#FFF9DB',
+        textMuted: '#D1CAA8',
+        border: '#5D5E3F',
+        success: '#97DDB2',
+        error: '#F5ACA2',
+        warning: '#EDCE8A'
     };
     typography = {
-        fontFamily: 'Arial, Helvetica, "Liberation Sans", sans-serif',
+        fontFamily: 'Arial, Helvetica, sans-serif',
         fontSizes: {
-            small: '14px',
+            small: '12px',
             medium: '16px',
-            large: '20px',
-            xlarge: '28px'
+            large: '22px',
+            xlarge: `${this.composition.body.titleSize}px`
         },
         fontWeights: {
             normal: 400,
-            medium: 600,
-            bold: 800
+            medium: 500,
+            bold: 700
         }
     };
     spacing = {
@@ -49,38 +51,38 @@ class NeoBrutalTheme {
         xl: '36px'
     };
     emailStyles = {
-        maxWidthPx: 600,
+        maxWidthPx: 640,
         container: {
-            borderColor: 'border',
+            borderColor: 'primary',
             borderWidth: '3px',
-            borderRadius: '0',
+            borderRadius: '0px',
             boxShadow: 'none'
         },
         header: {
             accentColor: 'primary',
-            accentWidth: '8px',
-            horizontalPadding: '24px',
+            accentWidth: '6px',
+            horizontalPadding: '32px',
             logoColor: 'text',
-            logoFontFamily: 'Arial, Helvetica, "Liberation Sans", sans-serif',
+            logoFontFamily: '"Arial Black", Arial, Helvetica, sans-serif',
             logoTextTransform: 'uppercase',
-            logoLetterSpacing: '0.04em',
-            imageBorderRadius: '0'
+            logoLetterSpacing: '0.12em',
+            imageBorderRadius: '0px'
         },
         body: {
             accentColor: 'secondary',
-            accentWidth: '4px',
-            borderRadius: '0',
+            accentWidth: '3px',
+            borderRadius: '0px',
             boxShadow: 'none',
-            horizontalPadding: '28px',
+            horizontalPadding: '32px',
             lineHeight: 1.55
         },
         button: {
             appearance: 'solid',
-            borderRadius: '0',
-            borderWidth: '3px',
+            borderRadius: '0px',
+            borderWidth: '2px',
             boxShadow: 'none',
             textTransform: 'uppercase',
-            letterSpacing: '0.04em'
+            letterSpacing: '0.06em'
         },
         footer: {
             accentColor: 'border',

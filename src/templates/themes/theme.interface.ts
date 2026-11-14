@@ -1,4 +1,5 @@
 import { ThemeType } from "../../core/enums/theme.enum";
+import type { IThemeComposition } from './theme-composition';
 
 export type IThemeColorToken = 'primary' | 'secondary' | 'border' | 'none';
 export type IThemeTextTransform = 'none' | 'uppercase' | 'capitalize';
@@ -57,6 +58,8 @@ export interface ITheme {
   spacing: ISpacing;
   /** Optional structural style tokens; omitted tokens fall back to conservative email-safe defaults. */
   emailStyles?: IThemeEmailStyles;
+  /** Art direction and genuinely distinct structural layouts; optional for custom themes. */
+  composition?: IThemeComposition;
 }
 
 export interface IThemeColors {

@@ -37,7 +37,6 @@ const noir_theme_1 = require("../templates/themes/noir.theme");
 const mint_theme_1 = require("../templates/themes/mint.theme");
 const saffron_theme_1 = require("../templates/themes/saffron.theme");
 const template_builder_1 = require("../templates/base/template-builder");
-const color_accessibility_1 = require("../templates/base/color-accessibility");
 const SAFE_COLOR = /^(#[\da-f]{3,8}|[a-z]{1,24}|(?:rgb|rgba|hsl|hsla)\([\d.%\s,+/-]+\))$/i;
 const SAFE_LANGUAGE_TAG = /^[A-Za-z]{2,8}(?:-[A-Za-z0-9]{1,8})*$/;
 const SAFE_NAMED_COLORS = new Set(('transparent inherit currentcolor aliceblue antiquewhite aqua aquamarine azure beige bisque black blanchedalmond blue blueviolet brown burlywood cadetblue chartreuse chocolate coral cornflowerblue cornsilk crimson cyan darkblue darkcyan darkgoldenrod darkgray darkgrey darkgreen darkkhaki darkmagenta darkolivegreen darkorange darkorchid darkred darksalmon darkseagreen darkslateblue darkslategray darkslategrey darkturquoise darkviolet deeppink deepskyblue dimgray dimgrey dodgerblue firebrick floralwhite forestgreen fuchsia gainsboro ghostwhite gold goldenrod gray grey green greenyellow honeydew hotpink indianred indigo ivory khaki lavender lavenderblush lawngreen lemonchiffon lightblue lightcoral lightcyan lightgoldenrodyellow lightgray lightgrey lightgreen lightpink lightsalmon lightseagreen lightskyblue lightslategray lightslategrey lightsteelblue lightyellow lime limegreen linen magenta maroon mediumaquamarine mediumblue mediumorchid mediumpurple mediumseagreen mediumslateblue mediumspringgreen mediumturquoise mediumvioletred midnightblue mintcream mistyrose moccasin navajowhite navy oldlace olive olivedrab orange orangered orchid palegoldenrod palegreen paleturquoise palevioletred papayawhip peachpuff peru pink plum powderblue purple rebeccapurple red rosybrown royalblue saddlebrown salmon sandybrown seagreen seashell sienna silver skyblue slateblue slategray slategrey snow springgreen steelblue tan teal thistle tomato turquoise violet wheat white whitesmoke yellow yellowgreen').split(' '));
@@ -182,38 +181,31 @@ class TemplateFactory {
                 // The renderer always uses the captured configuration. `data` is variable content only,
                 // never an alternative configuration or template source.
                 const body = renderConfig.body || {};
-                const alignment = body.alignment || 'left';
+                const alignment = body.alignment ?? theme.composition?.body.alignment ?? 'left';
                 if (!['left', 'center', 'right'].includes(alignment))
                     throw new Error('Invalid body alignment');
                 const buttonAlignment = body.buttonAlignment || alignment;
                 if (!['left', 'center', 'right'].includes(buttonAlignment))
                     throw new Error('Invalid button alignment');
-                const fontSize = body.fontSize ?? 14;
+                for (const section of [renderConfig.header, renderConfig.footer]) {
+                    if (section?.alignment !== undefined && !['left', 'center', 'right'].includes(section.alignment))
+                        throw new Error('Invalid section alignment');
+                }
+                const fontSize = body.fontSize ?? Number.parseFloat(theme.typography.fontSizes.medium);
                 if (!Number.isFinite(fontSize) || fontSize < 8 || fontSize > 72)
                     throw new Error('Invalid body font size');
-                const background = cssColor(body.backgroundColor, theme[variant].background);
-                const requestedTextColor = cssColor(body.textColor, theme[variant].text);
-                const textColor = (0, color_accessibility_1.readableTextColor)(requestedTextColor, background, theme[variant].text);
+                cssColor(body.backgroundColor, theme[variant].background);
+                cssColor(body.textColor, theme[variant].text);
                 cssColor(renderConfig.header?.backgroundColor, 'transparent');
                 cssColor(renderConfig.header?.textColor, 'inherit');
                 cssColor(renderConfig.footer?.backgroundColor, 'transparent');
                 cssColor(renderConfig.footer?.textColor, 'inherit');
-                const titleFontSize = Math.min(fontSize + 4, 20);
-                const bodyCellStyle = `padding: 0; text-align: ${alignment}; background-color: ${background}; color: ${textColor}; font-size: ${fontSize}px; font-family: ${theme.typography.fontFamily};`;
-                const titleStyle = `margin: 0 0 10px 0; color: ${textColor}; font-family: ${theme.typography.fontFamily}; font-size: ${titleFontSize}px; font-weight: ${theme.typography.fontWeights.medium}; line-height: 1.25; text-align: ${alignment};`;
-                const messageStyle = `margin: 0; color: ${textColor}; font-family: ${theme.typography.fontFamily}; font-size: ${fontSize}px; line-height: 1.5; text-align: ${alignment};`;
-                // body.content is the only configuration field intentionally treated as trusted HTML.
-                // Titles, messages, and style values are always escaped/validated and never become HTML.
-                const bodyContent = body.content ?? body.html ?? `
-          <table width="100%" cellpadding="0" cellspacing="0" role="presentation">
-            <tr>
-              <td align="${alignment}" style="${escapeHtml(bodyCellStyle)}">
-                <h2 style="${escapeHtml(titleStyle)}">${escapeHtml(body.title ?? 'Hello!')}</h2>
-                <p style="${escapeHtml(messageStyle)}">${escapeHtml(body.message ?? 'This is an email generated with tzMail.')}</p>
-              </td>
-            </tr>
-          </table>`;
-                builder.buildPreheader().buildHeader(typeof data?.headerContent === 'string' ? data.headerContent : '').buildBody(bodyContent);
+                builder.buildPreheader().buildHeader(typeof data?.headerContent === 'string' ? data.headerContent : '');
+                const trustedHtml = body.content ?? body.html;
+                if (trustedHtml !== undefined)
+                    builder.buildBody(trustedHtml);
+                else
+                    builder.buildMessage(body.title ?? 'Hello!', body.message ?? 'This is an email generated with tzMail.', fontSize);
                 if (body.buttonText && body.buttonUrl) {
                     builder.buildButton(body.buttonText, body.buttonUrl, body.buttonVariant || 'primary');
                 }
@@ -263,7 +255,12 @@ class TemplateFactory {
         const info = themeInfo[themeType];
         if (!info)
             throw new Error(`Theme ${themeType} not found`);
-        return info;
+        const design = this.themes.get(themeType)?.composition;
+        return design ? {
+            name: info.name,
+            description: design.description,
+            features: [design.name, `${design.header.layout} header`, `${design.body.layout} body`, `${design.footer.layout} footer`, `${design.body.alignment}-aligned typography`, 'No images required']
+        } : info;
     }
 }
 exports.TemplateFactory = TemplateFactory;

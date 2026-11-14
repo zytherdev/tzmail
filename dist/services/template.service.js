@@ -228,6 +228,7 @@ class TemplateService {
         if (config.header) {
             if (typeof config.header.show !== 'boolean')
                 errors.push('header.show must be a boolean');
+            enumValue(config.header.alignment, ['left', 'center', 'right'], 'header.alignment');
             if (config.header.logo) {
                 enumValue(config.header.logo.type, ['text', 'image'], 'header.logo.type');
                 enumValue(config.header.logo.size, ['small', 'medium', 'large'], 'header.logo.size');
@@ -270,6 +271,7 @@ class TemplateService {
         if (footer) {
             if (typeof footer.show !== 'boolean')
                 errors.push('footer.show must be a boolean');
+            enumValue(footer.alignment, ['left', 'center', 'right'], 'footer.alignment');
             for (const key of ['backgroundColor', 'textColor']) {
                 const color = footer[key];
                 if (color !== undefined && !isSafeColor(color))
@@ -386,15 +388,14 @@ class TemplateService {
     }
     generateExampleTemplate(themeType = theme_enum_1.ThemeType.MODERN, variant = 'light') {
         const exampleConfig = {
-            header: { show: true, logo: { type: 'text', text: 'ExampleApp', size: 'medium' }, backgroundColor: variant === 'light' ? '#ffffff' : '#1a1a1a', textColor: variant === 'light' ? '#111827' : '#f9fafb' },
+            header: { show: true, logo: { type: 'text', text: 'ExampleApp', size: 'medium' } },
             footer: {
                 show: true,
                 links: [{ text: 'Privacy Policy', url: 'https://example.com/privacy' }, { text: 'Terms of Service', url: 'https://example.com/terms' }, { text: 'Contact', url: 'https://example.com/contact' }],
                 socialLinks: [{ platform: 'twitter', url: 'https://twitter.com/example' }, { platform: 'github', url: 'https://github.com/example' }, { platform: 'linkedin', url: 'https://linkedin.com/company/example' }],
-                copyrightText: `© ${new Date().getFullYear()} ExampleApp. All rights reserved.`, unsubscribeText: 'Unsubscribe',
-                backgroundColor: variant === 'light' ? '#f9fafb' : '#111827', textColor: variant === 'light' ? '#6b7280' : '#9ca3af'
+                copyrightText: `© ${new Date().getFullYear()} ExampleApp. All rights reserved.`, unsubscribeText: 'Unsubscribe'
             },
-            layout: 'full', spacing: 'normal', borderRadius: themeType === theme_enum_1.ThemeType.MINIMAL ? 'none' : 'medium'
+            layout: 'full', spacing: 'normal'
         };
         return this.createTemplate(themeType, variant, exampleConfig);
     }

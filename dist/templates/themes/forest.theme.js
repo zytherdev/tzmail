@@ -2,38 +2,40 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.ForestTheme = void 0;
 const theme_enum_1 = require("../../core/enums/theme.enum");
+const theme_designs_1 = require("./theme-designs");
 class ForestTheme {
     id = theme_enum_1.ThemeType.FOREST;
+    composition = (0, theme_designs_1.getThemeComposition)(this.id);
     name = 'Forest';
     light = {
-        primary: '#315A3D',
-        secondary: '#657B5D',
-        background: '#F7F5EC',
-        text: '#26362B',
-        textMuted: '#58665A',
-        border: '#D9DFD2',
-        success: '#356B48',
-        error: '#A34037',
-        warning: '#805713'
+        primary: '#315A32',
+        secondary: '#4D592E',
+        background: '#EDF0DC',
+        text: '#25351F',
+        textMuted: '#4E5841',
+        border: '#ADB893',
+        success: '#275F3A',
+        error: '#93352F',
+        warning: '#6B500C'
     };
     dark = {
-        primary: '#A9C69A',
-        secondary: '#B4C2A8',
-        background: '#18231C',
-        text: '#F1F2E9',
-        textMuted: '#B7C2B5',
-        border: '#3A4A3D',
-        success: '#9BC99E',
-        error: '#F0A39A',
-        warning: '#E5C078'
+        primary: '#AAD299',
+        secondary: '#C2CF89',
+        background: '#202B19',
+        text: '#F0F4DD',
+        textMuted: '#C3CBA9',
+        border: '#4D5B36',
+        success: '#97DDB2',
+        error: '#F5ACA2',
+        warning: '#EDCE8A'
     };
     typography = {
-        fontFamily: 'Georgia, "Times New Roman", serif',
+        fontFamily: 'Arial, Helvetica, sans-serif',
         fontSizes: {
-            small: '14px',
+            small: '12px',
             medium: '16px',
-            large: '18px',
-            xlarge: '26px'
+            large: '22px',
+            xlarge: `${this.composition.body.titleSize}px`
         },
         fontWeights: {
             normal: 400,
@@ -53,35 +55,37 @@ class ForestTheme {
         container: {
             borderColor: 'border',
             borderWidth: '1px',
-            borderRadius: '8px',
+            borderRadius: '6px',
             boxShadow: 'none'
         },
         header: {
             accentColor: 'primary',
-            accentWidth: '4px',
-            horizontalPadding: '28px',
+            accentWidth: '3px',
+            horizontalPadding: '36px',
             logoColor: 'primary',
-            logoFontFamily: 'Georgia, "Times New Roman", serif',
+            logoFontFamily: 'Georgia, "Times New Roman", Times, serif',
+            logoTextTransform: 'none',
+            logoLetterSpacing: '0.02em',
             imageBorderRadius: '6px'
         },
         body: {
-            accentColor: 'secondary',
-            accentWidth: '3px',
+            accentColor: 'primary',
+            accentWidth: '5px',
             borderRadius: '6px',
             boxShadow: 'none',
-            horizontalPadding: '28px',
-            lineHeight: 1.65
+            horizontalPadding: '36px',
+            lineHeight: 1.8
         },
         button: {
-            appearance: 'solid',
-            borderRadius: '4px',
-            borderWidth: '1px',
+            appearance: 'outline',
+            borderRadius: '6px',
+            borderWidth: '2px',
             boxShadow: 'none',
-            textTransform: 'uppercase',
-            letterSpacing: '0.04em'
+            textTransform: 'none',
+            letterSpacing: '0.01em'
         },
         footer: {
-            accentColor: 'secondary',
+            accentColor: 'border',
             accentWidth: '1px'
         }
     };
