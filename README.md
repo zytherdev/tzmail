@@ -370,7 +370,7 @@ const html = await service.previewTemplate(
 );
 ```
 
-Headers também podem usar um logo de imagem e uma imagem hero de largura total. As URLs precisam ser `http:` ou `https:` e as imagens remotas devem ser hospedadas em um domínio confiável:
+Headers can also use an image logo and a full-width hero image. URLs must use `http:` or `https:`, and remote images should be hosted on a trusted domain:
 
 ```typescript
 const template = service.createTemplate(ThemeType.PAPER, 'light', {

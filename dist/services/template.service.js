@@ -53,8 +53,8 @@ function assertSafeUrl(value, allowMailto, field) {
         throw new Error(`${field} uses an unsafe URL scheme`);
 }
 /**
- * TemplateService - criação, renderização e gestão de templates de email.
- * Cache e histórico mantêm limites finitos e retornam snapshots defensivos.
+ * TemplateService - creation, rendering, and management of email templates.
+ * Cache and history use finite limits and return defensive snapshots.
  */
 class TemplateService {
     templateCache = new Map();
@@ -105,7 +105,7 @@ class TemplateService {
             if (cached && cached.expiresAt.getTime() > Date.now()) {
                 cached.hits++;
                 this.cacheHits++;
-                // Atualiza ordem para limitar o mapa por LRU aproximado.
+                // Update order to keep the map within the approximate LRU limit.
                 this.templateCache.delete(templateId);
                 this.templateCache.set(templateId, cached);
                 return this.copyTemplate(cached.template);
@@ -134,7 +134,7 @@ class TemplateService {
     }
     async renderTemplate(template, data, options) {
         try {
-            // _meta é reservado e sempre produzido internamente, nunca aceito do chamador.
+            // _meta is reserved and always produced internally; it is never accepted from the caller.
             const renderData = {
                 ...(data && typeof data === 'object' ? data : {}),
                 _meta: {
@@ -146,7 +146,7 @@ class TemplateService {
                 }
             };
             const html = await template.render(renderData);
-            // Minificação global removida: colapsar whitespace corrompia texto pré-formatado e <code>.
+            // Global minification removed: collapsing whitespace corrupted preformatted text and <code>.
             return this.options.minify ? this.minifyHtml(html) : html;
         }
         catch (error) {
@@ -200,7 +200,7 @@ class TemplateService {
         const oldTemplate = history[versionIndex];
         return this.createTemplate(oldTemplate.theme, oldTemplate.variant, oldTemplate.config, { cache: false });
     }
-    /** Encerrar o timer de limpeza quando a instância não for mais necessária. */
+    /** Stop the cleanup timer when the instance is no longer needed. */
     dispose() { clearInterval(this.cleanupTimer); }
     validateTemplateConfig(config) {
         const errors = [];
@@ -345,8 +345,8 @@ class TemplateService {
                 this.templateCache.delete(id);
         }
     }
-    // Mantido como transformação deliberadamente não destrutiva. HTML minification baseada em regex
-    // alteraria espaços de texto e conteúdo de <code>/<pre>; minify=true preserva o HTML original.
+    // Retained as a deliberately non-destructive transformation. Regex-based HTML minification
+    // would alter text spacing and <code>/<pre> content; minify=true preserves the original HTML.
     minifyHtml(html) { return html; }
     validateLimit(value, name) {
         if (!Number.isInteger(value) || value < 1)

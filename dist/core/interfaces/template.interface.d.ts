@@ -25,15 +25,15 @@ export interface ITemplateConfig {
 export interface IBodyConfig {
     title?: string;
     message?: string;
-    /** HTML intencionalmente confiável; os demais campos textuais são escapados pelo renderer. */
+    /** Intentionally trusted HTML; other textual fields are escaped by the renderer. */
     content?: string;
-    /** Alias explícito de content para quem prefere nomear o campo como HTML. */
+    /** Explicit alias for content when callers prefer to name the field html. */
     html?: string;
     buttonText?: string;
     buttonUrl?: string;
     buttonVariant?: 'primary' | 'secondary' | 'success' | 'danger';
     alignment?: 'left' | 'center' | 'right';
-    /** Alinhamento do CTA; quando omitido, acompanha body.alignment. */
+    /** CTA alignment; when omitted, follows body.alignment. */
     buttonAlignment?: 'left' | 'center' | 'right';
     backgroundColor?: string;
     textColor?: string;
@@ -66,7 +66,7 @@ export interface IFooterConfig {
     }>;
     copyrightText?: string;
     unsubscribeText?: string;
-    /** URL opcional do link de cancelamento; sem ela, o texto é exibido sem href fictício. */
+    /** Optional unsubscribe URL; without it, the text is rendered without a fake href. */
     unsubscribeUrl?: string;
     backgroundColor?: string;
     textColor?: string;

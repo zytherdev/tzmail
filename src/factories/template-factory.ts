@@ -175,8 +175,8 @@ export class TemplateFactory {
           : {};
         const renderConfig = resolveTemplateConfig(config, templateData);
         const builder = new TemplateBuilder(theme, renderConfig, variant);
-        // Renderer usa sempre a configuração capturada. `data` é somente conteúdo variável,
-        // nunca uma fonte alternativa de configuração/template.
+        // The renderer always uses the captured configuration. `data` is variable content only,
+        // never an alternative configuration or template source.
         const body = renderConfig.body || {};
         const alignment = body.alignment || 'left';
         if (!['left', 'center', 'right'].includes(alignment)) throw new Error('Invalid body alignment');
@@ -195,8 +195,8 @@ export class TemplateFactory {
         const bodyCellStyle = `padding: 0; text-align: ${alignment}; background-color: ${background}; color: ${textColor}; font-size: ${fontSize}px; font-family: ${theme.typography.fontFamily};`;
         const titleStyle = `margin: 0 0 10px 0; color: ${textColor}; font-family: ${theme.typography.fontFamily}; font-size: ${titleFontSize}px; font-weight: ${theme.typography.fontWeights.medium}; line-height: 1.25; text-align: ${alignment};`;
         const messageStyle = `margin: 0; color: ${textColor}; font-family: ${theme.typography.fontFamily}; font-size: ${fontSize}px; line-height: 1.5; text-align: ${alignment};`;
-        // body.content é o único campo da configuração intencionalmente tratado como HTML confiável.
-        // Título, mensagem e valores de estilo são sempre escapados/validados e não viram HTML.
+        // body.content is the only configuration field intentionally treated as trusted HTML.
+        // Titles, messages, and style values are always escaped/validated and never become HTML.
         const bodyContent = body.content ?? body.html ?? `
           <table width="100%" cellpadding="0" cellspacing="0" role="presentation">
             <tr>

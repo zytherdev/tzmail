@@ -11,19 +11,19 @@ interface TemplateCache {
 }
 
 export interface ITemplateServiceOptions {
-  /** Cache ligado por padrão; pode ser desligado por chamada. */
+  /** Cache enabled by default; can be disabled per call. */
   cache?: boolean;
-  /** TTL em segundos. Zero desabilita o cache para aquela criação; valores negativos/não finitos são inválidos. */
+  /** TTL in seconds. Zero disables storage for that creation; negative/non-finite values are invalid. */
   cacheTTL?: number;
   validateConfig?: boolean;
-  /** Mantido por compatibilidade. A transformação destrutiva foi desativada. */
+  /** Retained for compatibility. The destructive transformation has been disabled. */
   minify?: boolean;
   preview?: boolean;
-  /** Limite de templates em cache; padrão finito de 100. */
+  /** Limit on cached templates; finite default of 100. */
   maxCacheEntries?: number;
-  /** Limite de IDs de template guardados no histórico; padrão finito de 100. */
+  /** Limit on template IDs retained in history; finite default of 100. */
   maxHistoryEntries?: number;
-  /** Máximo de versões por ID de template; padrão 10. */
+  /** Maximum versions per template ID; default 10. */
   maxVersionsPerTemplate?: number;
 }
 
@@ -75,8 +75,8 @@ function assertSafeUrl(value: unknown, allowMailto: boolean, field: string): voi
 }
 
 /**
- * TemplateService - criação, renderização e gestão de templates de email.
- * Cache e histórico mantêm limites finitos e retornam snapshots defensivos.
+ * TemplateService - creation, rendering, and management of email templates.
+ * Cache and history use finite limits and return defensive snapshots.
  */
 export class TemplateService {
   private templateCache = new Map<string, TemplateCache>();
@@ -125,7 +125,7 @@ export class TemplateService {
       if (cached && cached.expiresAt.getTime() > Date.now()) {
         cached.hits++;
         this.cacheHits++;
-        // Atualiza ordem para limitar o mapa por LRU aproximado.
+        // Update order to keep the map within the approximate LRU limit.
         this.templateCache.delete(templateId);
         this.templateCache.set(templateId, cached);
         return this.copyTemplate(cached.template);
@@ -157,7 +157,7 @@ export class TemplateService {
 
   async renderTemplate(template: ITemplate, data: any, options?: { preview?: boolean }): Promise<string> {
     try {
-      // _meta é reservado e sempre produzido internamente, nunca aceito do chamador.
+      // _meta is reserved and always produced internally; it is never accepted from the caller.
       const renderData = {
         ...(data && typeof data === 'object' ? data : {}),
         _meta: {
@@ -169,7 +169,7 @@ export class TemplateService {
         }
       };
       const html = await template.render(renderData);
-      // Minificação global removida: colapsar whitespace corrompia texto pré-formatado e <code>.
+      // Global minification removed: collapsing whitespace corrupted preformatted text and <code>.
       return this.options.minify ? this.minifyHtml(html) : html;
     } catch (error) {
       throw new Error(`Failed to render template: ${error instanceof Error ? error.message : String(error)}`, { cause: error });
@@ -230,7 +230,7 @@ export class TemplateService {
     return this.createTemplate(oldTemplate.theme, oldTemplate.variant, oldTemplate.config, { cache: false });
   }
 
-  /** Encerrar o timer de limpeza quando a instância não for mais necessária. */
+  /** Stop the cleanup timer when the instance is no longer needed. */
   dispose(): void { clearInterval(this.cleanupTimer); }
 
   private validateTemplateConfig(config: ITemplateConfig): void {
@@ -356,8 +356,8 @@ export class TemplateService {
     }
   }
 
-  // Mantido como transformação deliberadamente não destrutiva. HTML minification baseada em regex
-  // alteraria espaços de texto e conteúdo de <code>/<pre>; minify=true preserva o HTML original.
+  // Retained as a deliberately non-destructive transformation. Regex-based HTML minification
+  // would alter text spacing and <code>/<pre> content; minify=true preserves the original HTML.
   private minifyHtml(html: string): string { return html; }
 
   private validateLimit(value: number, name: string): void {

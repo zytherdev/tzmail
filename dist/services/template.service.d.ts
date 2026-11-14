@@ -7,25 +7,25 @@ interface TemplateCache {
     hits: number;
 }
 export interface ITemplateServiceOptions {
-    /** Cache ligado por padrão; pode ser desligado por chamada. */
+    /** Cache enabled by default; can be disabled per call. */
     cache?: boolean;
-    /** TTL em segundos. Zero desabilita o cache para aquela criação; valores negativos/não finitos são inválidos. */
+    /** TTL in seconds. Zero disables storage for that creation; negative/non-finite values are invalid. */
     cacheTTL?: number;
     validateConfig?: boolean;
-    /** Mantido por compatibilidade. A transformação destrutiva foi desativada. */
+    /** Retained for compatibility. The destructive transformation has been disabled. */
     minify?: boolean;
     preview?: boolean;
-    /** Limite de templates em cache; padrão finito de 100. */
+    /** Limit on cached templates; finite default of 100. */
     maxCacheEntries?: number;
-    /** Limite de IDs de template guardados no histórico; padrão finito de 100. */
+    /** Limit on template IDs retained in history; finite default of 100. */
     maxHistoryEntries?: number;
-    /** Máximo de versões por ID de template; padrão 10. */
+    /** Maximum versions per template ID; default 10. */
     maxVersionsPerTemplate?: number;
 }
 type TemplateOptions = ITemplateServiceOptions;
 /**
- * TemplateService - criação, renderização e gestão de templates de email.
- * Cache e histórico mantêm limites finitos e retornam snapshots defensivos.
+ * TemplateService - creation, rendering, and management of email templates.
+ * Cache and history use finite limits and return defensive snapshots.
  */
 export declare class TemplateService {
     private templateCache;
@@ -60,7 +60,7 @@ export declare class TemplateService {
     clearCache(themeType?: ThemeType): number;
     getTemplateHistory(templateId: string): ITemplate[];
     restoreTemplateVersion(templateId: string, versionIndex: number): ITemplate | null;
-    /** Encerrar o timer de limpeza quando a instância não for mais necessária. */
+    /** Stop the cleanup timer when the instance is no longer needed. */
     dispose(): void;
     private validateTemplateConfig;
     private assertThemeAndVariant;
