@@ -1,4 +1,5 @@
 import { ThemeType } from "../enums/theme.enum";
+import type { SocialPlatform } from '../social-platforms';
 
 export interface ITemplate {
   name: string;
@@ -70,9 +71,11 @@ export interface IFooterConfig {
     url: string;
   }>;
   socialLinks?: Array<{
-    platform: 'facebook' | 'twitter' | 'linkedin' | 'github' | 'instagram' | 'youtube' | 'tiktok' | 'pinterest' | 'reddit' | 'gitlab' | 'stackoverflow' | 'medium' | 'dribbble' | 'behance' | 'telegram';
+    platform: SocialPlatform;
     url: string;
   }>;
+  /** Social footer links show only the icon by default; choose icon-and-name to include a visible label. */
+  socialLinkDisplay?: 'icon' | 'icon-and-name';
   copyrightText?: string;
   unsubscribeText?: string;
   /** Optional unsubscribe URL; without it, the text is rendered without a fake href. */

@@ -355,6 +355,26 @@ const html = await mailer.getTemplateService().previewTemplate(
 
 Logo and hero images are optional; every theme has a complete text-first layout. Section `backgroundColor` and `textColor` overrides are supported. When a requested color would be hard to read against its background, the renderer selects a more legible foreground. Footer links are unlined by default; use `linkDecoration: 'underline'` to underline footer navigation and unsubscribe links consistently.
 
+### Footer social links
+
+The footer recognizes 44 platforms: `facebook`, `twitter`, `x`, `linkedin`, `github`, `instagram`, `youtube`, `tiktok`, `pinterest`, `reddit`, `gitlab`, `stackoverflow`, `medium`, `dribbble`, `behance`, `telegram`, `threads`, `bluesky`, `mastodon`, `whatsapp`, `discord`, `slack`, `snapchat`, `twitch`, `spotify`, `soundcloud`, `vimeo`, `tumblr`, `flickr`, `vk`, `wechat`, `line`, `signal`, `quora`, `producthunt`, `devto`, `hashnode`, `substack`, `patreon`, `buymeacoffee`, `kofi`, `wordpress`, `blogger`, and `rss`.
+
+Social badges default to icon-only display and are rendered inline as email-safe, colored typographic marks—no external icon image or CDN is required. The accessible platform name remains on each link, so it does not turn into a broken-image alt label when a recipient's email client blocks remote images. Set `footer.socialLinkDisplay` to `'icon-and-name'` to show the platform names alongside the icons.
+
+```typescript
+footer: {
+  show: true,
+  socialLinkDisplay: 'icon-and-name',
+  socialLinks: [
+    { platform: 'bluesky', url: 'https://bsky.app/profile/example.com' },
+    { platform: 'instagram', url: 'https://instagram.com/example' },
+    { platform: 'github', url: 'https://github.com/example' }
+  ]
+}
+```
+
+The `SocialPlatform` type is exported for TypeScript consumers. URLs must be absolute `http:` or `https:` links.
+
 See the [theme gallery and customization guide](docs/theme-guide.md) for tips on previewing, choosing, and customizing themes.
 
 Templates also support `language` (default `en`), `direction` (`ltr`, `rtl`, or `auto`; default `ltr`), and a hidden `preheader` (up to 500 printable characters) for inbox previews. Preheaders support the same escaped per-recipient placeholders as other text fields.

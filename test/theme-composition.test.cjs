@@ -74,7 +74,7 @@ test('custom themes without composition still render and explicit trusted HTML i
   assert.doesNotMatch(trusted, /class="layout-column body-title-column"/);
 });
 
-test('header/footer omission, textual social links and explicit underline are respected', async () => {
+test('header/footer omission, icon-only social links and explicit underline are respected', async () => {
   const html = await TemplateFactory.createTemplate(ThemeType.EDITORIAL, 'light', {
     body: config.body,
     header: { show: false }, footer: { show: false }
@@ -85,9 +85,44 @@ test('header/footer omission, textual social links and explicit underline are re
     linkDecoration: 'underline',
     footer: { show: true, socialLinks: [{ platform: 'github', url: 'https://github.com/example' }] }
   }).render({});
-  assert.match(socials, />github<\/a>/);
+  assert.match(socials, /aria-label="GitHub"/);
+  assert.match(socials, />gh<\/span>/);
+  assert.doesNotMatch(socials, />GitHub<\/span>/);
   assert.match(socials, /text-decoration:underline !important/);
   assert.doesNotMatch(socials, /<img\b/);
+
+  const labeledSocial = await TemplateFactory.createTemplate(ThemeType.EDITORIAL, 'light', {
+    body: { title: 'Socials', message: 'Show the optional name.' },
+    footer: {
+      show: true,
+      socialLinkDisplay: 'icon-and-name',
+      socialLinks: [{ platform: 'github', url: 'https://github.com/example' }]
+    }
+  }).render({});
+  assert.match(labeledSocial, />gh<\/span>&nbsp;<span[^>]*>GitHub<\/span>/);
+});
+
+test('all supported social platforms render self-contained labeled footer badges', async () => {
+  const { SOCIAL_PLATFORM_INFO } = require('../dist/core/social-platforms.js');
+  const socialLinks = Object.keys(SOCIAL_PLATFORM_INFO).map(platform => ({
+    platform,
+    url: `https://example.com/${platform}`
+  }));
+  const html = await TemplateFactory.createTemplate(ThemeType.EDITORIAL, 'light', {
+    body: { title: 'Social links', message: 'No remote icons required.' },
+    footer: { show: true, socialLinks }
+  }).render({});
+  const labels = [...html.matchAll(/aria-label="([^"]+)"/g)].map(match => match[1]);
+  assert.equal(socialLinks.length, 44);
+  assert.equal(labels.length, socialLinks.length);
+  for (const link of socialLinks) {
+    const info = SOCIAL_PLATFORM_INFO[link.platform];
+    assert.ok(html.includes(`aria-label="${info.label}"`), `${link.platform} should have an accessible name`);
+    assert.ok(html.includes(`background-color:${info.color};`), `${link.platform} should use its icon badge color`);
+    assert.ok(html.includes(`>${info.glyph}</span>`), `${link.platform} should render its visible glyph`);
+    assert.ok(!html.includes(`<span style="vertical-align:middle;">${info.label}</span>`), `${link.platform} should be icon-only by default`);
+  }
+  assert.doesNotMatch(html, /<img\b|alt="/i);
 });
 
 test('equivalent CSS backgrounds retain readable text across header, body and footer', async () => {

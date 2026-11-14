@@ -3,6 +3,8 @@ import type { ITheme } from '../themes/theme.interface';
 import { DEFAULT_COMPOSITION, resolveThemeComposition, surfaceColor } from '../themes/theme-composition';
 import type { FooterComposition, ThemeAlignment } from '../themes/theme-composition';
 import { normalizeCssColor, readableTextColor } from './color-accessibility';
+import { SOCIAL_PLATFORM_INFO, isSocialPlatform } from '../../core/social-platforms';
+import type { SocialPlatform } from '../../core/social-platforms';
 
 function escapeHtml(value: unknown): string {
   return String(value ?? '').replace(/[&<>"']/g, character => ({
@@ -60,6 +62,18 @@ function alignment(value: unknown, fallback: ThemeAlignment): ThemeAlignment {
 interface FooterLink {
   text: string;
   url: string;
+  platform?: SocialPlatform;
+}
+
+function badgeTextColor(background: string): string {
+  const channels = background.match(/^#([\da-f]{6})$/i)?.[1];
+  if (!channels) return '#ffffff';
+  const linear = [0, 2, 4].map(index => {
+    const value = parseInt(channels.slice(index, index + 2), 16) / 255;
+    return value <= 0.04045 ? value / 12.92 : ((value + 0.055) / 1.055) ** 2.4;
+  });
+  const luminance = 0.2126 * linear[0]! + 0.7152 * linear[1]! + 0.0722 * linear[2]!;
+  return luminance > 0.179 ? '#000000' : '#ffffff';
 }
 
 /** Render only caller-supplied footer content; all layout furniture is structural. */
@@ -108,8 +122,11 @@ export function renderThemeFooter(theme: ITheme, config: ITemplateConfig, varian
   const social: FooterLink[] = [];
   for (const link of footer.socialLinks ?? []) {
     const url = safeUrl(link?.url, false);
-    // Platforms remain textual, including custom names received from JavaScript callers.
-    if (url && typeof link?.platform === 'string' && link.platform.trim()) social.push({ text: link.platform, url });
+    // Known services get a self-contained typographic badge; unknown names remain readable text.
+    if (url && typeof link?.platform === 'string' && link.platform.trim()) {
+      const platform = isSocialPlatform(link.platform) ? link.platform : undefined;
+      social.push({ text: platform ? SOCIAL_PLATFORM_INFO[platform].label : link.platform, url, platform });
+    }
   }
 
   function linkTable(items: FooterLink[], vertical = false, prominent = false, socialOnly = false): string {
@@ -122,7 +139,16 @@ export function renderThemeFooter(theme: ITheme, config: ITemplateConfig, varian
         const horizontalPadding = vertical ? '0' : '8px';
         const edgePadding = row.length === 1 ? '0' : horizontalPadding;
         const style = `${textStyle}padding:3px ${index === row.length - 1 ? '0' : edgePadding} 3px ${index === 0 ? '0' : edgePadding};vertical-align:top;`;
-        return `<td class="footer-link-cell" align="${align}" valign="top" style="${escapeHtml(style)}"><a href="${escapeHtml(item.url)}" style="${escapeHtml(linkStyle + (prominent ? `font-weight:${weight};` : ''))}">${escapeHtml(item.text)}</a></td>`;
+        const icon = socialOnly && item.platform ? SOCIAL_PLATFORM_INFO[item.platform] : undefined;
+        const showSocialName = footer?.socialLinkDisplay === 'icon-and-name';
+        const iconText = icon
+          ? `<span aria-hidden="true" style="display:inline-block;width:22px;height:22px;line-height:22px;border-radius:5px;background-color:${icon.color};color:${badgeTextColor(icon.color)};text-align:center;vertical-align:middle;font-family:Arial,Helvetica,sans-serif;font-size:${icon.glyph.length > 2 ? 8 : icon.glyph.length > 1 ? 10 : 14}px;font-weight:bold;">${escapeHtml(icon.glyph)}</span>${showSocialName ? '&nbsp;' : ''}`
+          : '';
+        const label = socialOnly && icon
+          ? showSocialName ? `<span style="vertical-align:middle;">${escapeHtml(item.text)}</span>` : ''
+          : escapeHtml(item.text);
+        const accessibleName = socialOnly && icon ? ` aria-label="${escapeHtml(item.text)}" title="${escapeHtml(item.text)}"` : '';
+        return `<td class="footer-link-cell" align="${align}" valign="top" style="${escapeHtml(style)}"><a href="${escapeHtml(item.url)}"${accessibleName} style="${escapeHtml(linkStyle + (prominent ? `font-weight:${weight};` : ''))}">${iconText}${label}</a></td>`;
       }).join('')}</tr>`);
     }
     return `<table class="footer-links${socialOnly ? ' footer-social-links' : ''}" align="${align}" cellpadding="0" cellspacing="0" border="0" role="presentation" style="${escapeHtml(tableStyle + 'width:auto;max-width:100%;')}">${rows.join('')}</table>`;

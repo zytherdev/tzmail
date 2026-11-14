@@ -1,6 +1,8 @@
 export { EmailFactory } from './factories/email-factory';
 export { TemplateFactory } from './factories/template-factory';
 export { ITemplate, ITemplateConfig } from './core/interfaces/template.interface';
+export { SOCIAL_PLATFORM_INFO } from './core/social-platforms';
+export type { SocialPlatform } from './core/social-platforms';
 export { ThemeType } from './core/enums/theme.enum';
 export { ITheme, IThemeColorToken, IThemeEmailStyles, IThemeTextTransform } from './templates/themes/theme.interface';
 export type { IThemeComposition, ThemeAlignment, ThemeSurface, HeaderComposition, BodyComposition, FooterComposition } from './templates/themes/theme-composition';

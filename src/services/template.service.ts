@@ -2,6 +2,7 @@ import { createHash } from 'node:crypto';
 import { ITemplate, ITemplateConfig } from '../core/interfaces/template.interface';
 import { TemplateFactory } from '../factories/template-factory';
 import { ThemeType } from '../core/enums/theme.enum';
+import { isSocialPlatform } from '../core/social-platforms';
 
 interface TemplateCache {
   template: ITemplate;
@@ -33,11 +34,6 @@ const VALID_THEMES = Object.values(ThemeType);
 const SAFE_LANGUAGE_TAG = /^[A-Za-z]{2,8}(?:-[A-Za-z0-9]{1,8})*$/;
 const SAFE_COLOR = /^(#[\da-f]{3,8}|[a-z]{1,24}|(?:rgb|rgba|hsl|hsla)\([\d.%\s,+/-]+\))$/i;
 const SAFE_COLOR_NAMES = new Set(('transparent inherit currentcolor aliceblue antiquewhite aqua aquamarine azure beige bisque black blanchedalmond blue blueviolet brown burlywood cadetblue chartreuse chocolate coral cornflowerblue cornsilk crimson cyan darkblue darkcyan darkgoldenrod darkgray darkgrey darkgreen darkkhaki darkmagenta darkolivegreen darkorange darkorchid darkred darksalmon darkseagreen darkslateblue darkslategray darkslategrey darkturquoise darkviolet deeppink deepskyblue dimgray dimgrey dodgerblue firebrick floralwhite forestgreen fuchsia gainsboro ghostwhite gold goldenrod gray grey green greenyellow honeydew hotpink indianred indigo ivory khaki lavender lavenderblush lawngreen lemonchiffon lightblue lightcoral lightcyan lightgoldenrodyellow lightgray lightgrey lightgreen lightpink lightsalmon lightseagreen lightskyblue lightslategray lightslategrey lightsteelblue lightyellow lime limegreen linen magenta maroon mediumaquamarine mediumblue mediumorchid mediumpurple mediumseagreen mediumslateblue mediumspringgreen mediumturquoise mediumvioletred midnightblue mintcream mistyrose moccasin navajowhite navy oldlace olive olivedrab orange orangered orchid palegoldenrod palegreen paleturquoise palevioletred papayawhip peachpuff peru pink plum powderblue purple rebeccapurple red rosybrown royalblue saddlebrown salmon sandybrown seagreen seashell sienna silver skyblue slateblue slategray slategrey snow springgreen steelblue tan teal thistle tomato turquoise violet wheat white whitesmoke yellow yellowgreen').split(' '));
-const SOCIAL_PLATFORMS = new Set([
-  'facebook', 'twitter', 'linkedin', 'github', 'instagram', 'youtube', 'tiktok', 'pinterest', 'reddit',
-  'gitlab', 'stackoverflow', 'medium', 'dribbble', 'behance', 'telegram'
-]);
-
 function cloneConfig<T>(value: T): T {
   if (value === undefined || value === null) return value;
   return JSON.parse(JSON.stringify(value)) as T;
@@ -288,6 +284,7 @@ export class TemplateService {
     if (footer) {
       if (typeof footer.show !== 'boolean') errors.push('footer.show must be a boolean');
       enumValue(footer.alignment, ['left', 'center', 'right'], 'footer.alignment');
+      enumValue(footer.socialLinkDisplay, ['icon', 'icon-and-name'], 'footer.socialLinkDisplay');
       for (const key of ['backgroundColor', 'textColor'] as const) {
         const color = footer[key];
         if (color !== undefined && !isSafeColor(color)) errors.push(`Invalid footer.${key}`);
@@ -297,7 +294,7 @@ export class TemplateService {
         else if (!hasTemplatePlaceholder(link.url)) fail(() => assertSafeUrl(link.url, true, 'footer link URL'));
       }
       for (const link of footer.socialLinks || []) {
-        if (!link || !SOCIAL_PLATFORMS.has(link.platform)) errors.push(`Invalid social platform: ${link?.platform}`);
+        if (!link || !isSocialPlatform(link.platform)) errors.push(`Invalid social platform: ${link?.platform}`);
         else if (!hasTemplatePlaceholder(link.url)) fail(() => assertSafeUrl(link.url, false, 'social link URL'));
       }
       const unsubscribeUrl = footer.unsubscribeUrl;

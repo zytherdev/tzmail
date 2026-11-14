@@ -5,6 +5,7 @@ const path = require('node:path');
 const { TemplateService } = require('../dist/services/template.service.js');
 const { TemplateFactory } = require('../dist/factories/template-factory.js');
 const { ThemeType } = require('../dist/core/enums/theme.enum.js');
+const { SOCIAL_PLATFORM_INFO } = require('../dist/core/social-platforms.js');
 
 const wait = ms => new Promise(resolve => setTimeout(resolve, ms));
 
@@ -342,6 +343,28 @@ test('dangerous and injected URLs are rejected; supported HTTPS and mailto links
   }), {});
   assert.match(html, /href="mailto:support@example.com\?subject=Hello"/);
   assert.match(html, /href="mailto:hello@example.com"/);
+});
+
+test('validates all 44 supported social platforms and rejects unknown platform keys', t => {
+  const service = new TemplateService();
+  t.after(() => service.dispose());
+  const socialLinks = Object.keys(SOCIAL_PLATFORM_INFO).map(platform => ({
+    platform,
+    url: `https://example.com/${platform}`
+  }));
+  assert.equal(socialLinks.length, 44);
+  assert.doesNotThrow(() => service.createTemplate(ThemeType.SYSTEM, 'light', plainConfig({
+    footer: { show: true, socialLinks, socialLinkDisplay: 'icon' }
+  })));
+  assert.doesNotThrow(() => service.createTemplate(ThemeType.SYSTEM, 'light', plainConfig({
+    footer: { show: true, socialLinks, socialLinkDisplay: 'icon-and-name' }
+  })));
+  assert.throws(() => service.createTemplate(ThemeType.SYSTEM, 'light', plainConfig({
+    footer: { show: true, socialLinkDisplay: 'name-only', socialLinks: [] }
+  })), /footer.socialLinkDisplay/);
+  assert.throws(() => service.createTemplate(ThemeType.SYSTEM, 'light', plainConfig({
+    footer: { show: true, socialLinks: [{ platform: 'unknownNetwork', url: 'https://example.com/unknown' }] }
+  })), /Invalid social platform: unknownNetwork/);
 });
 
 test('cache can be bypassed locally, expires on cache hit, and TTL zero disables storage', async t => {
