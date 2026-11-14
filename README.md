@@ -6,7 +6,7 @@
 
 ## License
 
-tzmail is released under the [ISC License](LICENSE). The package metadata also declares `"license": "ISC"` for npm consumers.
+tzmail is released under the [ISC License](LICENSE). 
 
 ## Requirements and installation
 
