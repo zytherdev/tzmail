@@ -1,6 +1,6 @@
 {
   "name": "@zyther/tzmail",
-  "version": "0.5.0",
+  "version": "0.5.1",
   "description": "TypeScript email templates, multi-provider delivery and optional BullMQ asynchronous queues.",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
