@@ -3,6 +3,7 @@ const path = require('node:path');
 const { TemplateFactory } = require('../dist/factories/template-factory.js');
 
 const galleryPath = path.join(__dirname, '..', 'examples', 'theme-gallery.html');
+const indexPath = path.join(__dirname, '..', 'index.html');
 const sampleConfig = {
   language: 'en',
   preheader: 'A more thoughtful way to share what matters.',
@@ -43,6 +44,24 @@ async function main() {
   if (!dataBlock.test(html)) throw new Error('Gallery data block was not found; refusing to overwrite the page.');
   const payload = JSON.stringify(themes).replace(/</g, '\\u003c');
   fs.writeFileSync(galleryPath, html.replace(dataBlock, `$1${payload}$2`));
-  console.log(`Updated ${galleryPath}: ${themes.length} redesigned themes, ${themes.length * 2} image-free previews.`);
+  const featured = new Set(['editorial', 'neobrutal', 'mint']);
+  const indexThemes = themes.map(item => {
+    const theme = TemplateFactory.getTheme(item.type);
+    const font = theme.composition.body.titleFont.toLowerCase();
+    const category = font.includes('courier') ? 'mono' : font.includes('georgia') || font.includes('times') ? 'serif' : 'sans';
+    return {
+      id: item.type, name: theme.name, category, direction: item.direction, description: item.description,
+      headerMode: item.headerMode, bodyMode: item.bodyMode, footerMode: item.footerMode,
+      colors: { primary: theme.light.primary, secondary: theme.light.secondary, background: theme.light.background, darkCanvas: theme.dark.background },
+      preview: featured.has(item.type) ? item.previews.light : undefined
+    };
+  });
+  const indexHtml = fs.readFileSync(indexPath, 'utf8');
+  const indexBlock = /(<script id="theme-catalog-data" type="application\/json">)[\s\S]*?(<\/script>)/;
+  if (!indexBlock.test(indexHtml)) throw new Error('Index theme-data block was not found; refusing to overwrite the page.');
+  const indexPayload = JSON.stringify(indexThemes).replace(/</g, '\\u003c');
+  fs.writeFileSync(indexPath, indexHtml.replace(indexBlock, `$1${indexPayload}$2`));
+  console.log(`Updated ${galleryPath}: ${themes.length} themes, ${themes.length * 2} image-free previews.`);
+  console.log(`Updated ${indexPath}: ${indexThemes.length} live theme profiles and ${featured.size} rendered showcase emails.`);
 }
 main().catch(error => { console.error(error); process.exitCode = 1; });

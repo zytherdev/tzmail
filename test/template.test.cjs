@@ -243,6 +243,27 @@ test('committed gallery embeds 68 previews with varied headers and CTA alignment
   assert.deepEqual(new Set(themes.map(theme => theme.buttonAlignment)), new Set(['left', 'center', 'right']));
 });
 
+test('home page atlas uses generated theme profiles and three real email previews', () => {
+  const home = fs.readFileSync(path.resolve(__dirname, '../index.html'), 'utf8');
+  const data = home.match(/<script id="theme-catalog-data" type="application\/json">([\s\S]*?)<\/script>/);
+  assert.ok(data, 'home page should embed generated theme catalog data');
+  const themes = JSON.parse(data[1]);
+  assert.equal(themes.length, 34);
+  assert.equal(new Set(themes.map(theme => theme.id)).size, 34);
+  assert.ok(themes.every(theme => theme.description && theme.colors.primary && theme.colors.background));
+  assert.deepEqual(themes.filter(theme => theme.preview).map(theme => theme.id), ['editorial', 'neobrutal', 'mint']);
+  for (const theme of themes.filter(item => item.preview)) {
+    assert.match(theme.preview, /<html lang="en"/);
+    assert.match(theme.preview, /A more thoughtful arrival\./);
+    assert.match(theme.preview, />Explore what comes next</);
+    assert.doesNotMatch(theme.preview, /<img\b|data:image/);
+  }
+  assert.match(home, /href="examples\/theme-gallery\.html"/);
+  assert.match(home, /data-demo-theme="neobrutal"/);
+  assert.match(home, /renderThemes\(\)/);
+  assert.doesNotMatch(home, /mail-stack|Visual systems and everything between/);
+});
+
 test('renders RTL output and escaped, interpolated English inbox preheaders', async t => {
   const service = new TemplateService();
   t.after(() => service.dispose());
