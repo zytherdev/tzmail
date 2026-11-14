@@ -509,4 +509,4 @@ Tests use the native `node:test` runner and fake transports; they do not send re
 
 ## License
 
-ISC. See `LICENSE`/repository metadata for the applicable terms.
+ISC.
