@@ -4,6 +4,10 @@
 
 > **Scope:** tzmail is a templates, transports, and sending queue layer, not a complete campaign platform. For high volume, use a durable queue, define idempotency and retries, and coordinate limits with the provider. SMTP or an API accepting the message does not guarantee inbox delivery.
 
+## License
+
+tzmail is released under the [ISC License](LICENSE). The package metadata also declares `"license": "ISC"` for npm consumers.
+
 ## Requirements and installation
 
 - Node.js 20 or later.
